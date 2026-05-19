@@ -1,36 +1,205 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Luam - Marketplace Platform
 
-## Getting Started
+A full-featured marketplace platform like Vinted, built with Next.js, Supabase, and Stripe Connect. Supports multi-currency transactions (EUR, USD, VND) with automatic 5% platform fee.
 
-First, run the development server:
+## Features
+
+- User authentication (sign up, login, profile)
+- Create and browse listings with images
+- Multi-currency support (EUR, USD, VND)
+- Stripe Connect payment processing with 5% platform fee
+- Real-time messaging between buyers and sellers
+- Order management and tracking
+- User ratings and reviews
+- Favorites/wishlist
+
+## Tech Stack
+
+- **Frontend**: Next.js 15, React, TypeScript, Tailwind CSS
+- **Backend**: Next.js API Routes
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Storage**: Supabase Storage
+- **Payments**: Stripe Connect
+
+## Setup Instructions
+
+### 1. Install Dependencies
+
+Already done! Dependencies are installed.
+
+### 2. Set Up Supabase
+
+1. Go to https://supabase.com and create a free account
+2. Create a new project
+3. Wait for the database to be ready (2-3 minutes)
+4. Go to Project Settings > API
+5. Copy your project URL and anon key
+6. Go to SQL Editor and run the entire `supabase-schema.sql` file
+7. Go to Storage and create a new bucket called `listings` (make it public)
+
+### 3. Set Up Stripe
+
+1. Go to https://stripe.com and create an account
+2. Go to Developers > API keys
+3. Copy your Publishable key and Secret key
+4. Enable Stripe Connect:
+   - Go to Connect > Settings
+   - Enable Express accounts
+   - Fill in your business details
+5. For webhooks (later):
+   - Go to Developers > Webhooks
+   - Add endpoint: `https://your-domain.com/api/webhooks/stripe`
+   - Select events: `payment_intent.succeeded`, `account.updated`
+
+### 4. Configure Environment Variables
+
+Edit `.env.local` and fill in your keys:
+
+```bash
+# Supabase (from step 2)
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...
+
+# Stripe (from step 3)
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_... (leave empty for now)
+
+# App
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+### 5. Run the Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+luam/
+├── app/
+│   ├── auth/
+│   │   ├── login/page.tsx          # Login page
+│   │   ├── signup/page.tsx         # Signup page
+│   │   └── signout/route.ts        # Sign out handler
+│   ├── listings/
+│   │   └── new/page.tsx            # Create listing page
+│   └── page.tsx                    # Homepage
+├── lib/
+│   ├── supabase/
+│   │   ├── client.ts               # Browser Supabase client
+│   │   └── server.ts               # Server Supabase client
+│   └── stripe.ts                   # Stripe utilities
+├── types/
+│   └── database.ts                 # TypeScript types
+└── supabase-schema.sql             # Database schema
+```
 
-## Learn More
+## Next Steps
 
-To learn more about Next.js, take a look at the following resources:
+### Phase 1: Complete Core Features (You are here)
+- [x] Authentication (login, signup)
+- [x] Create listings
+- [x] Browse listings
+- [ ] View single listing details
+- [ ] Stripe Connect seller onboarding
+- [ ] Checkout and payment flow
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Phase 2: Communication
+- [ ] Real-time messaging
+- [ ] Notifications
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Phase 3: Trust & Safety
+- [ ] User ratings and reviews
+- [ ] Report listing/user
+- [ ] Order tracking
 
-## Deploy on Vercel
+### Phase 4: Polish
+- [ ] Search and filters
+- [ ] User profiles
+- [ ] Favorites
+- [ ] Email notifications
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Database Schema
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The database includes these main tables:
+- `profiles` - User profiles (extends Supabase auth)
+- `listings` - Item listings with multi-currency prices
+- `listing_images` - Images for listings
+- `orders` - Purchase orders with Stripe payment info
+- `messages` - Chat messages between users
+- `conversations` - Message threads
+- `reviews` - User ratings and reviews
+- `favorites` - Saved listings
+- `categories` - Item categories
+
+## Payment Flow
+
+1. Buyer clicks "Buy Now" on a listing
+2. Seller must have completed Stripe Connect onboarding
+3. Buyer enters shipping address and payment details
+4. Stripe charges buyer (e.g., €100)
+5. Platform automatically takes 5% (€5)
+6. Seller receives 95% (€95) in their Stripe account
+7. Seller ships item and adds tracking number
+8. Buyer confirms receipt
+9. Order marked as complete
+
+## Currency Conversion
+
+The app stores prices in all three currencies:
+- EUR (base currency)
+- USD (1 EUR = 1.08 USD)
+- VND (1 EUR = 27,000 VND)
+
+Note: Exchange rates are hardcoded. For production, use a real-time currency API like:
+- https://exchangerate-api.com (free tier: 1,500 requests/month)
+- https://fixer.io
+- https://openexchangerates.org
+
+## Deployment
+
+### Deploy to Vercel (Free)
+
+1. Push your code to GitHub
+2. Go to https://vercel.com
+3. Import your repository
+4. Add environment variables from `.env.local`
+5. Deploy!
+
+Your app will be live at `https://your-app.vercel.app`
+
+### Update Stripe Webhook
+
+After deployment:
+1. Go to Stripe Dashboard > Webhooks
+2. Add endpoint: `https://your-app.vercel.app/api/webhooks/stripe`
+3. Copy the webhook secret
+4. Add it to Vercel environment variables as `STRIPE_WEBHOOK_SECRET`
+
+## Legal Requirements
+
+Before launching publicly:
+
+1. **Business Registration**: Register as a business (auto-entrepreneur in France)
+2. **Terms of Service**: State your 5% commission, refund policy, prohibited items
+3. **Privacy Policy**: GDPR-compliant privacy policy
+4. **Cookie Consent**: Cookie banner for EU users
+5. **Seller Agreement**: Terms for sellers using your platform
+
+## Support
+
+For issues or questions:
+- Check Supabase docs: https://supabase.com/docs
+- Check Stripe Connect docs: https://stripe.com/docs/connect
+- Check Next.js docs: https://nextjs.org/docs
+
+## License
+
+MIT
