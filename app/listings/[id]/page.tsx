@@ -155,9 +155,10 @@ export default function ListingDetailPage() {
       body: JSON.stringify({ listingId: listing.id }),
     })
 
-    const data = await res.json()
+    const data = await res.json().catch(() => ({ error: 'Failed to parse response' }))
     if (!res.ok) {
-      console.error('[ListingDetail] start conversation failed', data)
+      console.error('[ListingDetail] start conversation failed', { status: res.status, data })
+      alert(data.error || 'Failed to start conversation. Please try again.')
       return
     }
 
