@@ -1,0 +1,19 @@
+{
+  "EditListing": {
+    "title": "Chỉnh sửa tin đăng",
+    "save": "Lưu thay đổi",
+    "saving": "Đang lưu...",
+    "cancel": "Hủy bỏ",
+    "loading": "Đang tải...",
+    "error_load": "Không thể tải tin đăng",
+    "form": {
+      "photos": "Hình ảnh",
+      "title": "Tiêu đề *",
+      "description": "Mô tả",
+      "handcrafted": "Thủ công",
+      "artisanal": "Đồ nghệ nhân",
+      "price": "Giá *",
+      "currency": "Loại tiền tệ *"
+    }
+  }
+}

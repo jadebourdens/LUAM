@@ -1,0 +1,19 @@
+{
+  "EditListing": {
+    "title": "Edit Listing",
+    "save": "Save Changes",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "error_load": "Failed to load listing",
+    "form": {
+      "photos": "Photos",
+      "title": "Title *",
+      "description": "Description",
+      "handcrafted": "Handcrafted",
+      "artisanal": "Artisanal",
+      "price": "Price *",
+      "currency": "Currency *"
+    }
+  }
+}

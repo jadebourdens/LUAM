@@ -10,6 +10,8 @@ export default function NewListingPage() {
   const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
   const [currency, setCurrency] = useState<Currency>('USD')
+  const [isHandcrafted, setIsHandcrafted] = useState(false)
+  const [isArtisanal, setIsArtisanal] = useState(false)
   const [condition, setCondition] = useState<ListingCondition>('good')
   const [size, setSize] = useState('')
   const [brand, setBrand] = useState('')
@@ -35,6 +37,14 @@ export default function NewListingPage() {
     { label: 'Art & Design', slug: 'designer' },
     { label: 'Kids', slug: 'kids' },
     { label: 'Home', slug: 'home' },
+    { label: 'Furniture', slug: 'home-furniture', indent: true },
+    { label: 'Lighting', slug: 'home-lighting', indent: true },
+    { label: 'Decor', slug: 'home-decor', indent: true },
+    { label: 'Kitchen & Dining', slug: 'home-kitchen', indent: true },
+    { label: 'Textiles & Bedding', slug: 'home-textiles', indent: true },
+    { label: 'Storage & Organisation', slug: 'home-storage', indent: true },
+    { label: 'Garden & Outdoor', slug: 'home-garden', indent: true },
+    { label: 'Art & Prints', slug: 'home-art', indent: true },
     { label: 'Electronics', slug: 'electronics' },
     { label: 'Beauty', slug: 'beauty' },
     { label: 'Entertainment', slug: 'entertainment' },
@@ -105,6 +115,8 @@ export default function NewListingPage() {
           price_usd: priceUsd,
           price_vnd: priceVnd,
           currency,
+          is_handcrafted: isHandcrafted,
+          is_artisanal: isArtisanal,
           condition,
           size: size || null,
           brand: brand || null,
@@ -146,7 +158,8 @@ export default function NewListingPage() {
         }
       }
 
-      router.push(`/listings/${listing.id}`)
+      const locale = window.location.pathname.split('/')[1]
+      router.push(`/${locale}/listings/${listing.id}`)
     } catch (err: any) {
       setError(err.message)
       setLoading(false)
@@ -286,6 +299,33 @@ export default function NewListingPage() {
 
             {/* Condition */}
             <div>
+              <div className="space-y-3 mb-6">
+                <label className="flex items-start space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isHandcrafted}
+                    onChange={(e) => setIsHandcrafted(e.target.checked)}
+                    className="mt-1 h-4 w-4 text-[#FF5722] focus:ring-[#FF5722] border-gray-300 rounded"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-gray-900">Handcrafted</span>
+                    <p className="text-xs text-gray-500">Made manually with skill, often individually produced.</p>
+                  </div>
+                </label>
+                <label className="flex items-start space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isArtisanal}
+                    onChange={(e) => setIsArtisanal(e.target.checked)}
+                    className="mt-1 h-4 w-4 text-[#FF5722] focus:ring-[#FF5722] border-gray-300 rounded"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-gray-900">Artisanal</span>
+                    <p className="text-xs text-gray-500">Produced using traditional, non-mass methods.</p>
+                  </div>
+                </label>
+              </div>
+
               <label htmlFor="condition" className="block text-sm font-medium text-gray-700 mb-2">
                 Condition *
               </label>
