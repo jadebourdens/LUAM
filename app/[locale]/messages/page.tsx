@@ -3,8 +3,112 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useTranslations } from 'next-intl'
+
+type Currency = 'USD' | 'EUR' | 'VND'
+
+const currencySymbols: Record<Currency, string> = { USD: '$', EUR: '€', VND: '₫' }
+
+function fmtMoney(value: number, currency: Currency) {
+  if (currency === 'VND') return `₫${Math.round(value).toLocaleString('vi-VN')}`
+  return `${currencySymbols[currency]}${value.toFixed(2)}`
+}
+
+interface NegotiationOfferProps {
+  totalPrice: number
+  currency: Currency
+  onOfferConfirm: (amount: number) => void
+  onClose: () => void
+}
+
+function NegotiationOffer({ totalPrice, currency, onOfferConfirm, onClose }: NegotiationOfferProps) {
+  const t = useTranslations('Messages')
+  const [selected, setSelected] = useState<'5' | '10' | 'other' | null>(null)
+  const [customAmt, setCustomAmt] = useState('')
+  const [confirmed, setConfirmed] = useState(false)
+
+  const price5  = totalPrice * 0.95
+  const price10 = totalPrice * 0.90
+  const save5   = totalPrice * 0.05
+  const save10  = totalPrice * 0.10
+
+  const customVal = parseFloat(customAmt) || 0
+  const customPct = totalPrice > 0 ? ((1 - customVal / totalPrice) * 100).toFixed(1) : null
+
+  const confirmEnabled =
+    selected === '5' || selected === '10' || (selected === 'other' && customVal > 0)
+
+  const handleConfirm = () => {
+    if (!confirmEnabled) return
+    const amount = selected === '5' ? price5 : selected === '10' ? price10 : customVal
+    onOfferConfirm(amount)
+    setConfirmed(true)
+  }
+
+  const optClass = (opt: string) =>
+    `w-full flex items-center justify-between px-4 py-3 rounded-xl border text-left transition-all ${
+      selected === opt
+        ? 'border-[#FF5722] bg-orange-50 ring-2 ring-[#FF5722]/20'
+        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+    }`
+
+  const handleBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) onClose()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={handleBackdrop}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">💸</span>
+            <div>
+              <p className="font-semibold text-gray-900 text-sm">{t('make_offer')}</p>
+              <p className="text-xs text-gray-400">{t('offer_subtitle')}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors text-lg leading-none">×</button>
+        </div>
+
+        <div className="px-6 py-4 flex flex-col gap-2">
+          <button className={optClass('5')} onClick={() => { setSelected('5'); setConfirmed(false) }}>
+            <span className="font-medium text-gray-900 flex items-center gap-2 text-sm">5% off <span className="text-xs bg-orange-100 text-[#FF5722] px-2 py-0.5 rounded-full">{t('popular')}</span></span>
+            <span className="text-sm text-gray-500">{fmtMoney(price5, currency)} <span className="text-green-600 text-xs">({t('save')} {fmtMoney(save5, currency)})</span></span>
+          </button>
+
+          <button className={optClass('10')} onClick={() => { setSelected('10'); setConfirmed(false) }}>
+            <span className="font-medium text-gray-900 text-sm">10% off</span>
+            <span className="text-sm text-gray-500">{fmtMoney(price10, currency)} <span className="text-green-600 text-xs">({t('save')} {fmtMoney(save10, currency)})</span></span>
+          </button>
+
+          <button className={optClass('other')} onClick={() => { setSelected('other'); setConfirmed(false) }}>
+            <span className="font-medium text-gray-900 text-sm">{t('other_amount')}</span>
+            <span className="text-xs text-gray-400">{t('custom')}</span>
+          </button>
+
+          {selected === 'other' && (
+            <div className="mt-1">
+              <input type="number" value={customAmt} onChange={(e) => { setCustomAmt(e.target.value); setConfirmed(false) }} placeholder={`${t('enter_offer')} ${currency}`} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722]/30 focus:border-[#FF5722]" autoFocus />
+              {customVal > 0 && customPct && (
+                <p className="text-xs text-gray-500 mt-1 ml-1">
+                  {parseFloat(customPct) > 0 ? `${customPct}% ${t('discount')}` : parseFloat(customPct) < 0 ? `${Math.abs(parseFloat(customPct))}% ${t('above_asking')}` : t('same_price')}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="px-6 pb-5">
+          <button onClick={handleConfirm} disabled={!confirmEnabled} className="w-full py-3 rounded-xl bg-[#FF5722] text-white font-semibold text-sm hover:bg-[#e64a19] disabled:opacity-40 disabled:cursor-not-allowed transition-all">{t('confirm_offer')}</button>
+          {confirmed && <p className="text-center text-sm text-green-600 mt-3">✓ {t('offer_sent')}: {fmtMoney(selected === '5' ? price5 : selected === '10' ? price10 : customVal, currency)}</p>}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function MessagesPage() {
+  const t = useTranslations('Messages')
   const params = useParams()
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -15,22 +119,17 @@ export default function MessagesPage() {
   const [conversations, setConversations] = useState<any[]>([])
   const [activeConversation, setActiveConversation] = useState<any>(null)
   const [messages, setMessages] = useState<any[]>([])
-  const [newMessage, setNewMessage] = useState('')
-  const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [offerCustom, setOfferCustom] = useState('')
+  const [newMessage, setNewMessage] = useState('')
   const [showOffer, setShowOffer] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<{ id: string; title: string } | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const userRef = useRef<any>(null)
   const supabase = useMemo(() => createClient(), [])
 
-  const scrollToBottom = () => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'instant', block: 'nearest' })
-    }, 100)
-  }
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   const loadMessages = useCallback(async (convoId: string) => {
     const { data, error } = await supabase
@@ -38,260 +137,207 @@ export default function MessagesPage() {
       .select('*, sender:profiles(id, username, full_name, avatar_url)')
       .eq('conversation_id', convoId)
       .order('created_at', { ascending: true })
-    if (error) console.error('loadMessages error:', error)
-    setMessages(data || [])
-    scrollToBottom()
+    if (!error) setMessages(data || [])
   }, [supabase])
 
-  useEffect(() => {
-    if (!activeConversation) return
-    const channel = supabase
-      .channel(`chat-${activeConversation.id}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'chat_messages',
-        filter: `conversation_id=eq.${activeConversation.id}`
-      }, async (payload) => {
-        const { data: senderProfile } = await supabase
-          .from('profiles')
-          .select('id, username, full_name, avatar_url')
-          .eq('id', payload.new.sender_id)
-          .single()
+  const sendMessage = useCallback(async (content: string) => {
+    if (!content.trim() || !activeConversation || !user) return
+    const { error } = await supabase.from('chat_messages').insert({
+      conversation_id: activeConversation.id,
+      sender_id: user.id,
+      content: content.trim(),
+    })
+    if (!error) {
+      setNewMessage('')
+      loadMessages(activeConversation.id)
+    }
+  }, [activeConversation, user, supabase, loadMessages])
 
-        const enriched = { ...payload.new, sender: senderProfile }
-        setMessages((prev) => {
-          const filtered = prev.filter(m => !(m.id.startsWith('temp-') && m.content === payload.new.content))
-          return [...filtered, enriched]
-        })
-        scrollToBottom()
-      })
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
-  }, [activeConversation, supabase])
+  const handleOfferConfirm = useCallback((amount: number) => {
+    const listing = activeConversation?.listing
+    if (!listing) return
+    const currency: Currency = listing.currency ?? 'USD'
+    sendMessage(`💸 Offer: ${fmtMoney(amount, currency)}`)
+    setShowOffer(false)
+  }, [activeConversation, sendMessage])
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      sendMessage(newMessage)
+    }
+  }
+
+  const deleteConversation = async (convoId: string) => {
+    if (!convoId) return
+    const { error } = await supabase.from('conversations').delete().eq('id', convoId)
+    if (error) { alert('Failed to delete conversation'); return }
+
+    const { data: convos } = await supabase
+      .from('conversations')
+      .select(`*, listing:listings(id, title, price_usd, price_vnd, currency, images), buyer:profiles!conversations_buyer_id_fkey(id, username, full_name, avatar_url), seller:profiles!conversations_seller_id_fkey(id, username, full_name, avatar_url)`)
+      .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+      .order('updated_at', { ascending: false })
+
+    setConversations(convos || [])
+
+    if (activeConversation?.id === convoId) {
+      if (convos && convos.length > 0) {
+        setActiveConversation(convos[0])
+        loadMessages(convos[0].id)
+      } else {
+        setActiveConversation(null)
+        setMessages([])
+      }
+    }
+    setShowDeleteConfirm(null)
+  }
 
   useEffect(() => {
     const init = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push(`/${locale}/auth/login`); return }
       setUser(session.user)
-      userRef.current = session.user
 
-      const { data: convos, error } = await supabase
+      const { data: convos } = await supabase
         .from('conversations')
-        .select(`
-          *,
-          listing:listings(id, title, price_usd, price_vnd, price_eur, currency),
-          buyer:profiles!conversations_buyer_id_fkey(id, username, full_name, avatar_url),
-          seller:profiles!conversations_seller_id_fkey(id, username, full_name, avatar_url)
-        `)
+        .select(`*, listing:listings(id, title, price_usd, price_vnd, currency, images), buyer:profiles!conversations_buyer_id_fkey(id, username, full_name, avatar_url), seller:profiles!conversations_seller_id_fkey(id, username, full_name, avatar_url)`)
         .or(`buyer_id.eq.${session.user.id},seller_id.eq.${session.user.id}`)
         .order('updated_at', { ascending: false })
 
-      if (error) console.error('conversations error:', error)
-      setConversations(convos || [])
-
-      if (conversationId && convos) {
-        const active = convos.find((c: any) => c.id === conversationId)
-        if (active) { setActiveConversation(active); loadMessages(conversationId) }
+      if (convos && convos.length > 0) {
+        setConversations(convos)
+        const targetConvo = conversationId ? convos.find((c) => c.id === conversationId) ?? convos[0] : convos[0]
+        setActiveConversation(targetConvo)
+        loadMessages(targetConvo.id)
       }
       setLoading(false)
     }
     init()
   }, [conversationId, loadMessages, locale, router, supabase])
 
-  const sendMessage = async (content?: string) => {
-    const msg = content || newMessage.trim()
-    if (!msg || !activeConversation || !userRef.current || sending) return
-    setSending(true)
-    if (!content) setNewMessage('')
+  if (loading) return <div className="p-10 text-center">Loading...</div>
 
-    const optimistic = {
-      id: `temp-${Date.now()}`,
-      conversation_id: activeConversation.id,
-      sender_id: userRef.current.id,
-      content: msg,
-      created_at: new Date().toISOString(),
-      sender: { id: userRef.current.id, username: 'You', full_name: 'You', avatar_url: null },
-    }
-    setMessages((prev) => [...prev, optimistic])
-    scrollToBottom()
-
-    const { error } = await supabase.from('chat_messages').insert({
-      conversation_id: activeConversation.id,
-      sender_id: userRef.current.id,
-      content: msg,
-    })
-
-    if (error) {
-      setMessages((prev) => prev.filter((m) => m.id !== optimistic.id))
-      if (!content) setNewMessage(msg)
-      alert('Failed to send: ' + error.message)
-    } else {
-      await supabase.from('conversations').update({ updated_at: new Date().toISOString() }).eq('id', activeConversation.id)
-    }
-    setSending(false)
-    inputRef.current?.focus()
-  }
-
-  const sendOffer = (percent: number) => {
-    const listing = activeConversation?.listing
-    if (!listing) return
-    const price = listing.currency === 'EUR' ? listing.price_eur : listing.currency === 'VND' ? listing.price_vnd : listing.price_usd
-    const symbol = listing.currency === 'EUR' ? '€' : listing.currency === 'VND' ? '₫' : '$'
-    const discounted = (price * (1 - percent / 100)).toFixed(listing.currency === 'VND' ? 0 : 2)
-    sendMessage(`💸 Offer: ${percent}% off → ${symbol}${Number(discounted).toLocaleString()}`)
-    setShowOffer(false)
-  }
-
-  const sendCustomOffer = () => {
-    const listing = activeConversation?.listing
-    if (!listing || !offerCustom) return
-    const symbol = listing.currency === 'EUR' ? '€' : listing.currency === 'VND' ? '₫' : '$'
-    sendMessage(`💸 Custom offer: ${symbol}${offerCustom}`)
-    setOfferCustom('')
-    setShowOffer(false)
-  }
-
-  const getOther = (c: any) => c?.buyer_id === userRef.current?.id ? c?.seller : c?.buyer
-  const getAvatar = (profile: any) => profile?.avatar_url
-  const getInitial = (profile: any) => (profile?.full_name || profile?.username || '?')[0].toUpperCase()
-  const getListingPrice = (listing: any) => {
-    if (!listing) return ''
-    if (listing.currency === 'EUR') return `€${listing.price_eur}`
-    if (listing.currency === 'VND') return `${Number(listing.price_vnd).toLocaleString()} ₫`
-    return `$${listing.price_usd}`
-  }
-  const formatTime = (ts: string) => new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  const isBuyer = activeConversation?.buyer_id === userRef.current?.id
-
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#FF5722]" />
-    </div>
-  )
+  const listing = activeConversation?.listing
+  const offerPrice: number =
+    listing?.currency === 'EUR' ? (listing?.price_eur ?? 0)
+    : listing?.currency === 'VND' ? (listing?.price_vnd ?? 0)
+    : (listing?.price_usd ?? 0)
+  const offerCurrency: Currency = listing?.currency ?? 'USD'
 
   return (
-    <div className="bg-gray-50 flex flex-col" style={{ height: 'calc(100vh - 64px)' }}>
-      <div className="max-w-6xl w-full mx-auto px-4 py-4 flex flex-col flex-1 min-h-0">
-        <h1 className="text-2xl font-bold text-gray-900 mb-3 shrink-0">Messages</h1>
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-1 min-h-0 overflow-hidden">
-          {/* Sidebar */}
-          <div className="w-72 border-r border-gray-100 flex flex-col shrink-0">
-            <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Conversations</p>
-            </div>
-            <div className="overflow-y-auto flex-1">
-              {conversations.length === 0 && (
-                <div className="p-6 text-center text-gray-400 text-sm">No conversations yet</div>
-              )}
-              {conversations.map((c) => {
-                const other = getOther(c)
-                const isActive = activeConversation?.id === c.id
-                return (
-                  <button
-                    key={c.id}
-                    onClick={() => { setActiveConversation(c); router.push(`/${locale}/messages?conversation=${c.id}`); loadMessages(c.id); setShowOffer(false) }}
-                    className={`w-full px-4 py-3 border-b border-gray-50 text-left flex items-center gap-3 hover:bg-gray-50 transition-colors ${isActive ? 'bg-orange-50 border-l-4 border-l-[#FF5722]' : ''}`}
-                  >
-                    <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0 overflow-hidden">
-                      {getAvatar(other) ? <img src={getAvatar(other)} className="w-full h-full object-cover" alt="" /> : <span className="text-[#FF5722] font-bold text-sm">{getInitial(other)}</span>}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-sm text-gray-900 truncate">{other?.full_name || other?.username || 'User'}</p>
-                      <p className="text-xs text-gray-400 truncate">{c.listing?.title}</p>
-                    </div>
-                  </button>
-                )
-              })}
+    <>
+      {showOffer && activeConversation && (
+        <NegotiationOffer totalPrice={offerPrice} currency={offerCurrency} onOfferConfirm={handleOfferConfirm} onClose={() => setShowOffer(false)} />
+      )}
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 max-w-sm mx-4 text-center">
+            <p className="text-xl font-semibold mb-2">{t('delete_title')}</p>
+            <p className="text-gray-600 mb-6">
+              {t('delete_confirm')} <strong>{showDeleteConfirm.title}</strong>?
+              <br />{t('delete_warning')}
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowDeleteConfirm(null)} className="flex-1 py-3 rounded-xl border border-gray-300 hover:bg-gray-50">{t('cancel')}</button>
+              <button onClick={() => deleteConversation(showDeleteConfirm.id)} className="flex-1 py-3 rounded-xl bg-red-600 text-white hover:bg-red-700">{t('yes_delete')}</button>
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Chat */}
-          <div className="flex-1 flex flex-col min-w-0">
-            {!activeConversation ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-2">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-                <p className="text-sm">Select a conversation to start chatting</p>
+      <div className="bg-gray-50 flex flex-col" style={{ height: 'calc(100vh - 64px)' }}>
+        <div className="max-w-6xl w-full mx-auto px-4 py-4 flex flex-col flex-1 min-h-0">
+          <h1 className="text-2xl font-bold text-gray-900 mb-3 shrink-0">{t('title')}</h1>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-1 min-h-0 overflow-hidden">
+            <div className="w-72 border-r border-gray-100 flex flex-col shrink-0">
+              <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('conversations')}</p>
               </div>
-            ) : (
-              <>
-                {/* Header */}
-                <div className="px-6 py-3 border-b border-gray-100 bg-white flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center overflow-hidden shrink-0">
-                    {getAvatar(getOther(activeConversation)) ? <img src={getAvatar(getOther(activeConversation))} className="w-full h-full object-cover" alt="" /> : <span className="text-[#FF5722] font-bold text-xs">{getInitial(getOther(activeConversation))}</span>}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 text-sm leading-tight">{activeConversation.listing?.title}</p>
-                    <p className="text-xs text-[#FF5722] font-medium">{getListingPrice(activeConversation.listing)}</p>
-                  </div>
-                </div>
-
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3 bg-gray-50">
-                  {messages.length === 0 ? (
-                    <div className="text-center text-gray-400 text-sm py-8">No messages yet. Say hello!</div>
-                  ) : (
-                    messages.map((m, i) => {
-                      const isMe = String(m.sender_id) === String(userRef.current?.id)
-                      const isOffer = m.content?.startsWith('💸')
-                      return (
-                        <div key={m.id || i} className={`flex items-end gap-2 ${isMe ? 'justify-end' : 'justify-start'}`}>
-                          {!isMe && (
-                            <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center shrink-0 overflow-hidden">
-                              {getAvatar(m.sender) ? <img src={getAvatar(m.sender)} className="w-full h-full object-cover" alt="" /> : <span className="text-[#FF5722] text-xs font-bold">{getInitial(m.sender)}</span>}
-                            </div>
+              <div className="overflow-y-auto flex-1">
+                {conversations.length === 0 && (
+                  <p className="text-sm text-gray-400 px-4 py-6 text-center">{t('no_conversations')}</p>
+                )}
+                {conversations.map((c: any) => {
+                  const otherUser = c.buyer_id === user?.id ? c.seller : c.buyer
+                  const thumbnailUrl = Array.isArray(c.listing?.images) ? c.listing.images[0] : c.listing?.images
+                  return (
+                    <div
+                      key={c.id}
+                      className={`group w-full px-4 py-3 border-b border-gray-50 text-left flex items-center gap-3 cursor-pointer transition-colors ${
+                        activeConversation?.id === c.id ? 'bg-orange-50 border-l-4 border-l-[#FF5722]' : 'hover:bg-gray-50'
+                      }`}
+                      onClick={() => { setActiveConversation(c); loadMessages(c.id); setShowOffer(false) }}
+                    >
+                      <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-100">
+                        {thumbnailUrl ? (
+                          <img src={thumbnailUrl} alt={c.listing?.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300 text-[10px]">{t('no_img')}</div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          {otherUser?.avatar_url && (
+                            <img src={otherUser.avatar_url} alt={otherUser.username} className="w-6 h-6 rounded-full object-cover shrink-0" />
                           )}
-                          <div className={`max-w-xs lg:max-w-md flex flex-col gap-1 ${isMe ? 'items-end' : 'items-start'}`}>
-                            <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${isOffer ? 'bg-amber-50 border border-amber-200 text-amber-800 font-medium' : isMe ? 'bg-[#FF5722] text-white rounded-br-sm' : 'bg-white border border-gray-200 text-gray-900 rounded-bl-sm'}`}>
-                              {m.content}
-                            </div>
-                            <span className="text-[10px] text-gray-400 px-1">{formatTime(m.created_at)}</span>
-                          </div>
+                          <p className="font-semibold text-sm truncate">{otherUser?.username}</p>
                         </div>
-                      )
-                    })
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
-
-                {/* Offer Panel */}
-                {showOffer && isBuyer && (
-                  <div className="px-4 py-3 border-t border-amber-100 bg-amber-50 flex flex-wrap items-center gap-2">
-                    <span className="text-xs font-semibold text-amber-700 mr-1">Make an offer:</span>
-                    {[5, 10, 15, 20].map((pct) => (
-                      <button key={pct} onClick={() => sendOffer(pct)} className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold hover:bg-amber-200 transition-colors">
-                        {pct}% off
-                      </button>
-                    ))}
-                    <div className="flex items-center gap-1 ml-1">
-                      <span className="text-xs text-amber-700">or</span>
-                      <input type="number" value={offerCustom} onChange={(e) => setOfferCustom(e.target.value)} placeholder="Custom amount" className="w-32 px-2 py-1 text-xs border border-amber-200 rounded-full focus:outline-none bg-white" />
-                      <button onClick={sendCustomOffer} disabled={!offerCustom} className="px-3 py-1 bg-amber-500 text-white text-xs rounded-full hover:bg-amber-600 disabled:opacity-40">
-                        Send
+                        <p className="text-xs text-gray-400 truncate">{c.listing?.title}</p>
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm({ id: c.id, title: otherUser?.username || 'this conversation' }) }}
+                        className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 p-1 hover:bg-gray-100 rounded transition-all shrink-0"
+                        title={t('delete')}
+                      >
+                        🗑️
                       </button>
                     </div>
-                    <button onClick={() => setShowOffer(false)} className="ml-auto text-xs text-amber-500 hover:text-amber-700">Cancel</button>
-                  </div>
-                )}
+                  )
+                })}
+              </div>
+            </div>
 
-                {/* Input */}
-                <div className="px-4 py-3 border-t border-gray-100 bg-white flex items-center gap-2">
-                  {isBuyer && (
-                    <button onClick={() => setShowOffer((v) => !v)} title="Make an offer" className="w-9 h-9 rounded-full flex items-center justify-center bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors shrink-0 text-base">
-                      💸
+            <div className="flex-1 flex flex-col min-w-0 bg-white">
+              {activeConversation ? (
+                <>
+                  <div className="px-6 py-3 border-b border-gray-100 bg-white font-semibold text-sm flex items-center gap-3">
+                    {listing?.images?.[0] && (
+                      <img src={listing.images[0]} alt={listing.title} className="w-9 h-9 rounded-lg object-cover border border-gray-100 shrink-0" />
+                    )}
+                    {listing?.title ?? 'Conversation'}
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3 bg-gray-50">
+                    {messages.map((m: any, i: number) => (
+                      <div key={i} className={`flex ${m.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`px-4 py-2.5 rounded-2xl text-sm max-w-[70%] break-words ${m.sender_id === user?.id ? 'bg-[#FF5722] text-white' : 'bg-white border border-gray-200'}`}>
+                          {m.content}
+                        </div>
+                      </div>
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
+
+                  <div className="p-4 border-t border-gray-100 bg-white flex items-center gap-2">
+                    <button onClick={() => setShowOffer(true)} className="shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-amber-50 hover:bg-amber-100 text-lg border border-amber-200 transition-colors" title={t('make_offer')}>💸</button>
+                    <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={handleKeyDown} placeholder={t('type_message')} className="flex-1 border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722]/30 focus:border-[#FF5722]" />
+                    <button onClick={() => sendMessage(newMessage)} disabled={!newMessage.trim()} className="shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-[#FF5722] hover:bg-[#e64a19] text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                        <path d="M3.478 2.405a.75.75 0 0 0-.926.94l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.405Z" />
+                      </svg>
                     </button>
-                  )}
-                  <input ref={inputRef} type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()} placeholder="Type a message..." className="flex-1 bg-gray-100 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722] focus:bg-white transition-colors" />
-                  <button onClick={() => sendMessage()} disabled={sending || !newMessage.trim()} className="w-9 h-9 rounded-full bg-[#FF5722] text-white flex items-center justify-center hover:bg-[#E64A19] transition-colors disabled:opacity-40">
-                    Send
-                  </button>
-                </div>
-              </>
-            )}
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">{t('select_conversation')}</div>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }

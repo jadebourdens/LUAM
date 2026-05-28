@@ -167,5 +167,159 @@ Bạn cứ gửi prompt này cho Hermes nhé, nó sẽ giúp bạn gỡ rối t�
      3000.                                                                      
                  
                                                                                                                                                               
-                                  
-                      
+ Step 1 — tell me what pages/components you want in Vietnamese first. Pick from:
+
+Navbar (Search, Sell, Sign in, Sign out)-- ok
+Homepage (Recent Items, filter bar) --ok 
+Messages page -- ok
+Listings page --- ok
+Profile page
+My Wishlist- ok
+Orders-ok
+
+sign in with google app/\[locale\]/auth/login/page.tsx
+
+🍉 Day 27 May 26
+
+Task 1: Allow google sign in --- not done
+
+Task 2:payment check out features
+
+2.1 The Checkout UI (Before the Transfer)
+Final Order Summary: Clearly state the item name and the exact total price. Do not hide the amount behind a sub-menu.
+
+Clear Call-to-Action (CTA): Use the button we discussed, labeled clearly (e.g., "Get Transfer Instructions").
+
+Trust Indicators: Add a small note reassuring the buyer: "Bank transfer is the most trusted way to pay in Vietnam. Your order is secured once we confirm the transaction."
+
+2.2 The Transfer Instructions Page (The New Window)
+This page is your most critical touchpoint. It should be clean and contain:
+
+Recipient Details: Seller's Name, Bank Name, and Account Number. Use "Copy" buttons next to these fields—buyers hate manually typing account numbers (which leads to mistakes).
+
+Exact Amount: Display the final total in a large, bold font.
+
+Transaction Reference (CRITICAL): Provide a unique string (e.g., LUAM-12345) and instruct the buyer: "You MUST enter this code in your transfer description/message field." This is how you will reconcile the payment.
+
+Visual Step-by-Step: A simple 3-step graphic showing them how to perform the transfer.
+
+2.3 Verification & Follow-up Logic
+Grace Period: Do not contact the buyer immediately. If no payment is detected, wait at least 30–60 minutes.
+
+Help-First Follow-up: As we discussed, send a "Help" message rather than a "Payment" message.
+
+Self-Service Cancellation: On the transfer page, include a button that says "I decided not to buy." If they click this, it updates the order status to "Cancelled" and stops all follow-up messages automatically.
+
+Status Tracking: Your database needs at least four states for this to work:
+
+PENDING: User opened the checkout but hasn't clicked "Get Instructions."
+
+INSTRUCTIONS_VIEWED: User has the bank details.
+
+PAID_VERIFIED: Transfer confirmed.
+
+CANCELLED: User opted out.
+
+2.4 Seller Notifications
+Instant Alert: The moment a user clicks "Get Transfer Instructions," notify the seller. This allows the seller to keep an eye on their banking app, knowing a payment might be arriving soon.
+
+Payment Confirmation Prompt: Once the seller verifies the money in their account, they should have a simple button in their dashboard: "Confirm Payment Received." This triggers the final confirmation to the buyer.
+
+Summary Checklist for Implementation:ComponentPurpose"Copy" ButtonsReduces human error when typing account numbers.Unique Ref CodeThe only way to automate payment matching.Status FlagsAllows you to send follow-ups only to those who need them.Help-First ToneKeeps the brand friendly even when chasing payment.
+
+Result: 
+
+Notes2.1 Checkout UI✅ 
+DoneYou have the order creation and the button to navigate to instructions.
+
+2.2 Instructions Page✅ Done
+The page is live, displays seller bank details, and includes the "Copy" functionality we implemented.
+
+You have successfully built the core marketplace infrastructure for bank transfer payments! You’ve handled the Checkout, Instructional UI, Manual Verification, and Order Status Management (including the "Cancel" feature).
+
+2.3 Verification Logic✅ DoneWe implemented the PAID (or paid_verified) status update in your API route.
+
+The Path Forward: Task 3
+While the manual system works, it is currently "passive"—the seller only knows a payment is waiting if they happen to check their dashboard. Task 3 is about making the system "active" so your users feel supported.
+
+Here are your next three logical milestones:
+
+Task 3.1: Transactional Alerts (The "Notify" Phase)
+
+Currently, when a buyer clicks "Get Instructions," the seller has no idea. We need to implement a simple notification system (or an email alert) so the seller knows they need to log in and look for a bank transfer.
+
+Task 3.2: The "Help-First" Follow-up Logic
+
+We need to implement the grace period logic. If a user views the instructions but doesn't pay within 60 minutes, we provide a "Need help with your payment?" button on their order page to prevent abandonment.
+
+Task 3.3: Seller "Action Required" Dashboard
+
+As we discussed, filtering the seller dashboard to highlight pending orders is the perfect way to finish the UI/UX polish.
+
+
+
+2.4 Seller Notifications🛠 In ProgressWe have the "Confirm Payment Received" button logic, but we still need to finalize the UI/UX for the sellers.                               
+    
+
+
+♨️♨️♨️♨️♨️ What’s Next: The "Post-Purchase Professionalism" Phase
+Instead of just having a database update, you should now ensure the users feel informed and secure. Here is the suggested priority:
+
+1. Proactive Notification (Improving User Experience)
+Currently, everything relies on the user or seller checking a dashboard.
+
+The Goal: Trigger an email or a system notification when the status changes.
+
+Why: When a buyer clicks "I paid," they shouldn't have to wonder if the seller saw it. A simple automated email (or even a clear UI message) that says "The seller has been notified and will verify your payment soon" builds massive trust.
+
+2. Seller Dashboard "Empty States" & Filtering (Improving Usability)
+Your seller dashboard might currently be a list of every order ever.
+
+The Goal: Create a "To-Do" tab or a filtered view for the seller.
+
+Why: A seller with 50 orders shouldn't have to hunt for the one that needs verification. Adding a simple tab that says "Action Required" (showing only pending orders) will make the "Confirm Payment" button much more useful.
+
+3. Grace Period & "Help-First" Follow-ups
+You now have the pending and viewed_instructions statuses.
+
+The Goal: If an order sits in viewed_instructions for more than 2 hours, show a "Need help with the transfer?" link on their Orders page.
+
+Why: Sometimes buyers get stuck or nervous about the manual transfer. Providing a "Help" button there prevents them from just leaving the site and forgetting the order.
+
+My Recommendation for your next move:
+Since you are looking for an alternance program, the best "next step" is to add a Seller "Action Required" Dashboard.
+
+Why?
+
+It demonstrates that you understand the seller's workflow, not just the code.
+
+It is a high-impact, low-effort feature that makes the marketplace feel like a "real" product.
+
+Would you like to build that "Action Required" filter on the seller's side, or would you rather look at setting up basic email notifications for order status changes?
+
+
+🔴 Need translation (user-facing important):
+
+auth/login/page.tsx
+auth/signup/page.tsx
+checkout/[listingId]/page.tsx
+checkout/local-transfer/page.tsx
+listings/new/page.tsx
+listings/[id]/edit/page.tsx
+users/[id]/page.tsx
+
+🟡 Low priority (can skip for now):
+
+about/page.tsx
+help/page.tsx
+sustainability/page.tsx
+checkout/success/page.tsx
+checkout/cancel/page.tsx
+checkout/mock-pay/page.tsx
+checkout/vnpay/return/page.tsx
+admin/analytics/page.tsx
+admin/moderation/page.tsx
+profile/edit/page.tsx
+login/page.tsx (duplicate of auth/login?)
+
+Which one do you want to start with?

@@ -56,7 +56,7 @@ export default function EditProfilePage() {
       setLoading(false)
     }
     load()
-  }, [])
+  }, [locale, router, supabase]) // Added dependencies
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]

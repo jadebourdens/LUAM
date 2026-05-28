@@ -1,409 +1,196 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import { Currency, ListingCondition } from '@/types/database'
+import Image from 'next/image'
+import Link from 'next/link'
+import DeleteListingButton from '@/components/delete-listing-button'
+import { useTranslations } from 'next-intl'
 
-export default function NewListingPage() {
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [price, setPrice] = useState('')
-  const [currency, setCurrency] = useState<Currency>('USD')
-  const [isHandcrafted, setIsHandcrafted] = useState(false)
-  const [isArtisanal, setIsArtisanal] = useState(false)
-  const [condition, setCondition] = useState<ListingCondition>('good')
-  const [size, setSize] = useState('')
-  const [brand, setBrand] = useState('')
-  const [color, setColor] = useState('')
-  const [categorySlug, setCategorySlug] = useState<string>('')
-  const [images, setImages] = useState<File[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+export default function ListingDetailPage() {
+  const t = useTranslations('Listing')
+  const params = useParams()
   const router = useRouter()
-  const supabase = createClient()
+  const id = params?.id as string
+  const locale = (params?.locale as string) ?? 'en'
 
-  const CATEGORY_OPTIONS: { label: string; slug: string; indent?: boolean }[] = [
-    { label: 'Women', slug: 'women' },
-    { label: 'Clothing', slug: 'women-clothing', indent: true },
-    { label: 'Shoes', slug: 'women-shoes', indent: true },
-    { label: 'Bags', slug: 'women-bags', indent: true },
-    { label: 'Accessories', slug: 'women-accessories', indent: true },
-    { label: 'Men', slug: 'men' },
-    { label: 'Clothing', slug: 'men-clothing', indent: true },
-    { label: 'Shoes', slug: 'men-shoes', indent: true },
-    { label: 'Accessories', slug: 'men-accessories', indent: true },
-    { label: 'Watches', slug: 'men-watches', indent: true },
-    { label: 'Art & Design', slug: 'designer' },
-    { label: 'Kids', slug: 'kids' },
-    { label: 'Home', slug: 'home' },
-    { label: 'Furniture', slug: 'home-furniture', indent: true },
-    { label: 'Lighting', slug: 'home-lighting', indent: true },
-    { label: 'Decor', slug: 'home-decor', indent: true },
-    { label: 'Kitchen & Dining', slug: 'home-kitchen', indent: true },
-    { label: 'Textiles & Bedding', slug: 'home-textiles', indent: true },
-    { label: 'Storage & Organisation', slug: 'home-storage', indent: true },
-    { label: 'Garden & Outdoor', slug: 'home-garden', indent: true },
-    { label: 'Art & Prints', slug: 'home-art', indent: true },
-    { label: 'Electronics', slug: 'electronics' },
-    { label: 'Beauty', slug: 'beauty' },
-    { label: 'Entertainment', slug: 'entertainment' },
-  ]
+  const [listing, setListing] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [user, setUser] = useState<any>(null)
+  const [isFavorited, setIsFavorited] = useState(false)
+  const [favoriteLoading, setFavoriteLoading] = useState(false)
+  const [safetyLoading, setSafetyLoading] = useState(false)
+  const [safetyNotice, setSafetyNotice] = useState<string | null>(null)
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files)
-      if (files.length + images.length > 8) {
-        setError('Maximum 8 images allowed')
-        return
-      }
-      setImages([...images, ...files])
-    }
-  }
+  useEffect(() => {
+    if (!id) return
 
-  const removeImage = (index: number) => {
-    setImages(images.filter((_, i) => i !== index))
-  }
+    const fetchListing = async () => {
+      const supabase = createClient()
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      setUser(currentUser)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-
-    try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        setError('You must be logged in to create a listing')
-        setLoading(false)
-        return
-      }
-
-      // Calculate prices in all currencies
-      const priceNum = parseFloat(price)
-      let priceEur = 0, priceUsd = 0, priceVnd = 0
-
-      if (currency === 'USD') {
-        priceUsd = priceNum
-        priceEur = priceNum / 1.08
-        priceVnd = priceNum * 25000
-      } else {
-        priceVnd = priceNum
-        priceEur = priceNum / 27000
-        priceUsd = priceNum / 25000
-      }
-
-      // Resolve category slug → DB UUID (null if categories table not seeded yet)
-      let resolvedCategoryId: string | null = null
-      if (categorySlug) {
-        const { data: cat } = await supabase
-          .from('categories')
+      if (currentUser) {
+        const { data: fav } = await supabase
+          .from('favorites')
           .select('id')
-          .eq('slug', categorySlug)
+          .eq('user_id', currentUser.id)
+          .eq('listing_id', id)
           .maybeSingle()
-        resolvedCategoryId = cat?.id ?? null
+        setIsFavorited(!!fav)
       }
 
-      // Create listing
-      const { data: listing, error: listingError } = await supabase
+      const { data, error } = await supabase
         .from('listings')
-        .insert({
-          seller_id: user.id,
-          title,
-          description,
-          price_eur: priceEur,
-          price_usd: priceUsd,
-          price_vnd: priceVnd,
-          currency,
-          is_handcrafted: isHandcrafted,
-          is_artisanal: isArtisanal,
-          condition,
-          size: size || null,
-          brand: brand || null,
-          color: color || null,
-          category_id: resolvedCategoryId,
-          status: 'active',
-        })
-        .select()
+        .select(`
+          *,
+          seller:profiles(id, username, full_name, avatar_url, rating_average, rating_count, location),
+          category:categories(name, slug),
+          images:listing_images(image_url, position)
+        `)
+        .eq('id', id)
         .single()
 
-      if (listingError) throw new Error(`Creating listing failed: ${listingError.message}`)
-
-      // Upload images
-      if (images.length > 0) {
-        for (let i = 0; i < images.length; i++) {
-          const file = images[i]
-          const fileExt = file.name.split('.').pop()
-          const fileName = `${listing.id}/${Date.now()}-${i}.${fileExt}`
-
-          const { error: uploadError } = await supabase.storage
-            .from('listings')
-            .upload(fileName, file)
-
-          if (uploadError) throw new Error(`Uploading image to storage failed: ${uploadError.message}`)
-
-          const { data: { publicUrl } } = supabase.storage
-            .from('listings')
-            .getPublicUrl(fileName)
-
-          const { error: imgRowError } = await supabase
-            .from('listing_images')
-            .insert({
-              listing_id: listing.id,
-              image_url: publicUrl,
-              position: i,
-            })
-
-          if (imgRowError) throw new Error(`Saving image row failed: ${imgRowError.message}`)
-        }
-      }
-
-      const locale = window.location.pathname.split('/')[1]
-      router.push(`/${locale}/listings/${listing.id}`)
-    } catch (err: any) {
-      setError(err.message)
+      if (error) { setError(error.message); setLoading(false); return }
+      setListing(data)
       setLoading(false)
+    }
+
+    fetchListing()
+  }, [id])
+
+  const handleMessageSeller = async () => {
+    if (!listing?.id) return
+    const res = await fetch('/api/messages/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ listingId: listing.id }),
+    })
+    const data = await res.json()
+    if (res.ok && data.conversationId) {
+      router.push(`/${locale}/messages?conversation=${data.conversationId}`)
+    } else {
+      alert(data.error || 'Failed to start conversation')
     }
   }
 
+  const handleToggleFavorite = async () => {
+    if (!listing?.id || !user) return
+    setFavoriteLoading(true)
+    const res = await fetch('/api/favorites/toggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ listingId: listing.id }),
+    })
+    if (res.ok) {
+      const data = await res.json()
+      setIsFavorited(!!data.favorited)
+    }
+    setFavoriteLoading(false)
+  }
+
+  const handleReportListing = async () => {
+    if (!user || !listing?.id) return
+    setSafetyLoading(true)
+    const res = await fetch('/api/reports/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ listingId: listing.id, reportedUserId: listing.seller_id, reason: 'suspicious_listing', details: 'User reported from listing detail page' }),
+    })
+    const data = await res.json()
+    setSafetyNotice(res.ok ? 'Report submitted.' : (data.error || 'Failed to submit report'))
+    setSafetyLoading(false)
+  }
+
+  const handleBlockSeller = async () => {
+    if (!user || !listing?.seller_id) return
+    setSafetyLoading(true)
+    const res = await fetch('/api/blocks/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ blockedUserId: listing.seller_id }),
+    })
+    const data = await res.json()
+    setSafetyNotice(res.ok ? 'Seller blocked.' : (data.error || 'Failed to block seller'))
+    setSafetyLoading(false)
+  }
+
+  if (loading) return <div className="p-12 text-center">{t('loading')}</div>
+  if (error || !listing) return <div className="p-12 text-center">{t('not_found')}</div>
+
+  const sortedImages = [...(listing.images || [])].sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0))
+
+  const formatPrice = () => {
+    if (listing.currency === 'EUR') return `€${listing.price_eur}`
+    if (listing.currency === 'USD') return `$${listing.price_usd}`
+    if (listing.currency === 'VND') return `${listing.price_vnd?.toLocaleString()} ₫`
+    return ''
+  }
+
+  const conditionLabels: Record<string, string> = {
+    new: t('condition_new'),
+    like_new: t('condition_like_new'),
+    good: t('condition_good'),
+    fair: t('condition_fair'),
+    worn: t('condition_worn'),
+  }
+
+  const isSeller = user && listing.seller_id === user.id
+
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h1 className="text-3xl font-bold mb-6">List an Item</h1>
-
-          {error && (
-            <div className="mb-4 rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-800">{error}</div>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Images */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Photos (max 8)
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleImageChange}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-[#E64A19] hover:file:bg-orange-100"
-              />
-              {images.length > 0 && (
-                <div className="mt-4 grid grid-cols-4 gap-4">
-                  {images.map((image, index) => (
-                    <div key={index} className="relative">
-                      <img
-                        src={URL.createObjectURL(image)}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-24 object-cover rounded"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6">
+          <Link href={`/${locale}`} className="text-sm text-gray-500 hover:text-gray-700">{t('back')}</Link>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="space-y-4">
+            <div className="relative aspect-square w-full bg-gray-200 rounded-lg overflow-hidden">
+              {sortedImages.length > 0 ? (
+                <Image src={sortedImages[0].image_url} alt={listing.title} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" priority />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-gray-400">{t('no_image')}</div>
               )}
             </div>
-
-            {/* Title */}
+          </div>
+          <div className="space-y-6">
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                Title *
-              </label>
-              <input
-                type="text"
-                id="title"
-                required
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#FF5722] focus:border-[#FF5722]"
-                placeholder="e.g., Blue Nike Running Shoes"
-              />
-            </div>
-
-            {/* Description */}
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                Description
-              </label>
-              <textarea
-                id="description"
-                rows={4}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#FF5722] focus:border-[#FF5722]"
-                placeholder="Describe your item..."
-              />
-            </div>
-
-            {/* Price and Currency */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
-                  Price *
-                </label>
-                <input
-                  type="number"
-                  id="price"
-                  required
-                  step="0.01"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#FF5722] focus:border-[#FF5722]"
-                  placeholder="0.00"
-                />
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{listing.title}</h1>
+              <p className="text-2xl font-bold text-[#FF5722] mb-4">{formatPrice()}</p>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="relative w-12 h-12 shrink-0 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center">
+                  {listing.seller?.avatar_url
+                    ? <Image src={listing.seller.avatar_url} alt="" width={48} height={48} className="object-cover rounded-full" />
+                    : <span className="text-gray-600">{listing.seller?.full_name?.[0] || 'U'}</span>
+                  }
+                </div>
+                <div>
+                  <Link href={`/${locale}/users/${listing.seller?.id}`} className="font-medium text-gray-900 hover:text-[#FF5722]">{listing.seller?.full_name || 'Anonymous'}</Link>
+                  <p className="text-sm text-gray-500">{listing.seller?.location}</p>
+                </div>
               </div>
-              <div>
-                <label htmlFor="currency" className="block text-sm font-medium text-gray-700 mb-2">
-                  Currency *
-                </label>
-                <select
-                  id="currency"
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value as Currency)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#FF5722] focus:border-[#FF5722]"
-                >
-                  <option value="USD">USD ($)</option>
-                  <option value="VND">VND (₫)</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Category */}
-            <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-                Category
-              </label>
-              <select
-                id="category"
-                value={categorySlug}
-                onChange={(e) => setCategorySlug(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#FF5722] focus:border-[#FF5722]"
-              >
-                <option value="">Select a category…</option>
-                {CATEGORY_OPTIONS.map((c) => (
-                  <option key={c.slug} value={c.slug}>
-                    {c.indent ? `    ${c.label}` : c.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Condition */}
-            <div>
-              <div className="space-y-3 mb-6">
-                <label className="flex items-start space-x-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isHandcrafted}
-                    onChange={(e) => setIsHandcrafted(e.target.checked)}
-                    className="mt-1 h-4 w-4 text-[#FF5722] focus:ring-[#FF5722] border-gray-300 rounded"
-                  />
-                  <div>
-                    <span className="text-sm font-medium text-gray-900">Handcrafted</span>
-                    <p className="text-xs text-gray-500">Made manually with skill, often individually produced.</p>
+              <div className="space-y-3">
+                {!isSeller && user ? (
+                  <>
+                    <Link href={`/${locale}/checkout/${listing.id}`} className="block w-full bg-[#FF5722] text-white py-3 px-4 rounded-lg hover:bg-[#E64A19] font-medium text-center">{t('buy_now')}</Link>
+                    <button onClick={handleMessageSeller} className="w-full py-2 px-4 rounded-lg border border-gray-300 text-gray-700 hover:border-gray-400">{t('message_seller')}</button>
+                    <button onClick={handleToggleFavorite} disabled={favoriteLoading} className="w-full py-2 px-4 rounded-lg border border-gray-300 text-gray-700 hover:border-gray-400 disabled:opacity-60">
+                      {favoriteLoading ? t('saving') : isFavorited ? t('saved') : t('add_favorite')}
+                    </button>
+                  </>
+                ) : user ? (
+                  <div className="space-y-3">
+                    <Link href={`/${locale}/listings/${listing.id}/edit`} className="block w-full text-sm py-2 px-4 rounded-lg border border-gray-300 text-gray-700 text-center">{t('modify')}</Link>
+                    <DeleteListingButton listingId={listing.id} title={listing.title} redirectTo={`/${locale}`} className="w-full text-sm py-2 px-4 rounded-lg border border-red-300 text-red-700" />
                   </div>
-                </label>
-                <label className="flex items-start space-x-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isArtisanal}
-                    onChange={(e) => setIsArtisanal(e.target.checked)}
-                    className="mt-1 h-4 w-4 text-[#FF5722] focus:ring-[#FF5722] border-gray-300 rounded"
-                  />
-                  <div>
-                    <span className="text-sm font-medium text-gray-900">Artisanal</span>
-                    <p className="text-xs text-gray-500">Produced using traditional, non-mass methods.</p>
-                  </div>
-                </label>
-              </div>
-
-              <label htmlFor="condition" className="block text-sm font-medium text-gray-700 mb-2">
-                Condition *
-              </label>
-              <select
-                id="condition"
-                value={condition}
-                onChange={(e) => setCondition(e.target.value as ListingCondition)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#FF5722] focus:border-[#FF5722]"
-              >
-                <option value="new">New with tags</option>
-                <option value="like_new">Like new</option>
-                <option value="good">Good</option>
-                <option value="fair">Fair</option>
-                <option value="worn">Worn</option>
-              </select>
-            </div>
-
-            {/* Additional Details */}
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label htmlFor="size" className="block text-sm font-medium text-gray-700 mb-2">
-                  Size
-                </label>
-                <input
-                  type="text"
-                  id="size"
-                  value={size}
-                  onChange={(e) => setSize(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#FF5722] focus:border-[#FF5722]"
-                  placeholder="e.g., M, 42"
-                />
-              </div>
-              <div>
-                <label htmlFor="brand" className="block text-sm font-medium text-gray-700 mb-2">
-                  Brand
-                </label>
-                <input
-                  type="text"
-                  id="brand"
-                  value={brand}
-                  onChange={(e) => setBrand(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#FF5722] focus:border-[#FF5722]"
-                  placeholder="e.g., Nike"
-                />
-              </div>
-              <div>
-                <label htmlFor="color" className="block text-sm font-medium text-gray-700 mb-2">
-                  Color
-                </label>
-                <input
-                  type="text"
-                  id="color"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#FF5722] focus:border-[#FF5722]"
-                  placeholder="e.g., Blue"
-                />
+                ) : (
+                  <Link href={`/${locale}/auth/login`} className="block w-full bg-[#FF5722] text-white py-3 px-4 rounded-lg hover:bg-[#E64A19] font-medium text-center">{t('sign_in_buy')}</Link>
+                )}
               </div>
             </div>
-
-            {/* Submit */}
-            <div className="flex justify-end space-x-4">
-              <button
-                type="button"
-                onClick={() => router.back()}
-                className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-6 py-2 bg-[#FF5722] text-white rounded-md hover:bg-[#E64A19] disabled:opacity-50"
-              >
-                {loading ? 'Creating...' : 'List Item'}
-              </button>
-            </div>
-          </form>
+          </div>
         </div>
       </div>
     </div>

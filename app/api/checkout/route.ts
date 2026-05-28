@@ -63,12 +63,71 @@ export async function POST(req: Request) {
     }
 
     if (chosenMethod === 'bank_transfer_vnd') {
-      const transferRef = `LUAM-${order.id.slice(0, 8).toUpperCase()}`
-      return NextResponse.json({
-        localPayment: true,
-        url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/local-transfer?order_id=${order.id}&ref=${transferRef}`,
-      })
-    }
+  const transferRef = `LUAM-${order.id.slice(0, 8).toUpperCase()}`
+
+  // Fetch buyer, seller profiles and bank details
+  const [{ data: buyer }, { data: seller }] = await Promise.all([
+    supabase.from('profiles').select('full_name, email:id').eq('id', user.id).single(),
+    supabase.from('profiles').select('full_name, bank_name, bank_account_number, bank_account_name').eq('id', listing.seller_id).single(),
+  ])
+
+  // Fetch buyer email from auth
+  const { data: { user: authUser } } = await supabase.auth.getUser()
+  const buyerEmail = authUser?.email || ''
+
+  // Fetch seller email
+  const { data: sellerAuth } = await supabase.auth.admin.getUserById(listing.seller_id)
+  const sellerEmail = sellerAuth?.user?.email || ''
+
+  try {
+    const { resend } = await import('@/lib/resend')
+    const { OrderConfirmedEmail } = await import('@/lib/emails/order-confirmed')
+    const { SellerNewOrderEmail } = await import('@/lib/emails/seller-new-order')
+
+    await Promise.all([
+      // Email to buyer
+      resend.emails.send({
+        from: 'Luam Marketplace <onboarding@resend.dev>',
+        to: buyerEmail,
+        subject: `Order confirmed — ${listing.title}`,
+        react: OrderConfirmedEmail({
+          buyerName: buyer?.full_name || 'there',
+          sellerName: seller?.full_name || 'Seller',
+          listingTitle: listing.title,
+          amount: amountMain,
+          currency: listing.currency,
+          orderId: order.id,
+          ref: transferRef,
+          bankName: seller?.bank_name || '',
+          bankAccountNumber: seller?.bank_account_number || '',
+          bankAccountName: seller?.bank_account_name || '',
+        }),
+      }),
+      // Email to seller
+      resend.emails.send({
+        from: 'Luam Marketplace <onboarding@resend.dev>',
+        to: sellerEmail,
+        subject: `New order received — ${listing.title}`,
+        react: SellerNewOrderEmail({
+          sellerName: seller?.full_name || 'there',
+          buyerName: buyer?.full_name || 'Buyer',
+          listingTitle: listing.title,
+          amount: amountMain,
+          currency: listing.currency,
+          orderId: order.id,
+          ref: transferRef,
+        }),
+      }),
+    ])
+  } catch (e) {
+    console.error('Email sending failed:', e)
+    // Don't block the order if email fails
+  }
+
+  return NextResponse.json({
+    localPayment: true,
+url: `${process.env.NEXT_PUBLIC_APP_URL}/en/checkout/local-transfer?order_id=${order.id}&ref=${transferRef}`,  })
+}
 
     if (chosenMethod === 'vnpay_mock' || chosenMethod === 'momo_mock') {
       return NextResponse.json({

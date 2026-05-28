@@ -13,7 +13,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [listing, setListing] = useState<any>(null)
-  const [paymentMethod, setPaymentMethod] = useState<'stripe_card' | 'bank_transfer_vnd' | 'vnpay' | 'vnpay_mock' | 'momo_mock'>('stripe_card')
+  const [paymentMethod, setPaymentMethod] = useState<'bank_transfer_vnd'>('bank_transfer_vnd')
 
   useEffect(() => {
     const load = async () => {
@@ -28,8 +28,7 @@ export default function CheckoutPage() {
   }, [listingId])
 
   const amount = listing?.currency === 'EUR' ? Number(listing?.price_eur || 0) : listing?.currency === 'USD' ? Number(listing?.price_usd || 0) : Number(listing?.price_vnd || 0)
-  const platformFee = amount * 0.05
-  const total = amount + platformFee
+  const total = amount
 
   const formatMoney = (value: number) => {
     if (!listing?.currency) return `${value}`
@@ -63,7 +62,9 @@ export default function CheckoutPage() {
     }
 
     if (data.url) {
-      window.location.href = data.url
+      // Opens in a new window
+      window.open(data.url, '_blank')
+      setLoading(false)
       return
     }
 
@@ -83,47 +84,29 @@ export default function CheckoutPage() {
           <div className="border rounded-lg p-4 mb-6 space-y-2 text-sm">
             <p><strong>Item:</strong> {listing.title}</p>
             <div className="flex justify-between"><span>Item price</span><span>{formatMoney(amount)}</span></div>
-            <div className="flex justify-between"><span>Platform fee (5%)</span><span>{formatMoney(platformFee)}</span></div>
             <div className="border-t pt-2 mt-2 flex justify-between font-semibold text-base"><span>Total</span><span>{formatMoney(total)}</span></div>
           </div>
         )}
 
-        <div className="mb-4">
-          <p className="text-sm font-medium mb-2">Payment method</p>
-          <div className="space-y-2 text-sm">
-            <label className="flex items-center gap-2">
-              <input type="radio" name="paymentMethod" checked={paymentMethod === 'stripe_card'} onChange={() => setPaymentMethod('stripe_card')} />
-              Card payment (Stripe)
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="radio" name="paymentMethod" checked={paymentMethod === 'bank_transfer_vnd'} onChange={() => setPaymentMethod('bank_transfer_vnd')} />
-              Bank transfer (VND)
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="radio" name="paymentMethod" checked={paymentMethod === 'vnpay'} onChange={() => setPaymentMethod('vnpay')} />
-              VNPay (sandbox)
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="radio" name="paymentMethod" checked={paymentMethod === 'vnpay_mock'} onChange={() => setPaymentMethod('vnpay_mock')} />
-              VNPay QR (Mock)
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="radio" name="paymentMethod" checked={paymentMethod === 'momo_mock'} onChange={() => setPaymentMethod('momo_mock')} />
-              MoMo QR (Mock)
-            </label>
-          </div>
+        <div className="mb-4 bg-stone-50 border border-stone-200 rounded-xl p-4">
+          <p className="text-sm font-medium mb-1">💳 Payment method</p>
+          <p className="text-xs text-gray-500 mb-3">Bank transfer is the most trusted payment method in Vietnam</p>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input type="radio" name="paymentMethod" checked={true} readOnly />
+            <div>
+              <p className="text-sm font-medium">🏦 Bank Transfer (VND)</p>
+              <p className="text-xs text-gray-400">Transfer directly to seller's bank account</p>
+            </div>
+          </label>
         </div>
 
-        <button onClick={handleBuyNow} disabled={loading} className="w-full bg-[#FF5722] text-white py-3 rounded-lg hover:bg-[#E64A19] disabled:opacity-60">
-          {loading
-            ? 'Processing…'
-            : paymentMethod === 'stripe_card'
-            ? 'Pay with Stripe'
-            : paymentMethod === 'bank_transfer_vnd'
-            ? 'Continue to Transfer Instructions'
-            : paymentMethod === 'vnpay'
-            ? 'Continue to VNPay'
-            : 'Continue to Mock QR Payment'}
+        {/* Clickable button added here */}
+        <button 
+          onClick={handleBuyNow} 
+          disabled={loading}
+          className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition"
+        >
+          {loading ? 'Processing…' : '🏦 Continue to Transfer Instructions'}
         </button>
 
         <button onClick={() => router.back()} className="w-full mt-3 border border-gray-300 py-3 rounded-lg text-gray-700">Back</button>
