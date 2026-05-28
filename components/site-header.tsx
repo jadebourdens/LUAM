@@ -52,14 +52,14 @@ export default function SiteHeader() {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*', // Lắng nghe tất cả các sự kiện (INSERT, UPDATE, DELETE)
           schema: 'public',
           table: 'chat_messages'
         },
-        (payload) => {
-          const newPayload = payload.new as any
-          if (newPayload.receiver_id === userId && !newPayload.is_read) {
-            setUnreadCount((prev) => prev + 1)
+        async (payload) => {
+          // Chỉ re-fetch nếu sự thay đổi liên quan đến người dùng hiện tại (tin nhắn mới, cập nhật hoặc xóa)
+          if (payload.new?.receiver_id === userId || payload.old?.receiver_id === userId) {
+            await fetchUnreadCount() // Truy vấn lại tổng số tin nhắn chưa đọc từ DB
           }
         }
       )
