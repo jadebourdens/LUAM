@@ -3,78 +3,78 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+// Định nghĩa interface cho dữ liệu từ Supabase
 interface NewChatMessagePayload {
-  receiver_id: string;
-  is_read: boolean;
-  // Add other properties if needed for type safety
+  receiver_id: string
+  is_read: boolean
 }
 
 export default function SiteHeader() {
-  const [unreadCount, setUnreadCount] = useState(0)
+  const [unreadCount, setUnreadCount] = useState<number>(0)
   const [userId, setUserId] = useState<string | null>(null)
 
+  // 1. Lấy User ID khi component mount
   useEffect(() => {
     const supabase = createClient()
-
-    const getUserId = async () => {
+    
+    async function getUserId() {
       const { data: { user } } = await supabase.auth.getUser()
       setUserId(user?.id || null)
     }
-
+    
     getUserId()
+  }, [])
 
-    // No need to fetch initial count here, let the userId dependency handle it
-  }, []) // Run once to get user ID
-
+  // 2. Fetch dữ liệu và thiết lập Real-time subscription
   useEffect(() => {
-    if (!userId) {
-      setUnreadCount(0) // Reset if no user
-      return // Don't proceed without a user ID
-    }
+    if (!userId) return
 
     const supabase = createClient()
 
-    const fetchUnreadCount = async () => {
+    // Hàm lấy số lượng tin nhắn chưa đọc
+    async function fetchUnreadCount() {
       const { count, error } = await supabase
         .from('chat_messages')
         .select('*', { count: 'exact', head: true })
-        .eq('receiver_id', userId)
+        .eq('receiver_id', userId!)
         .eq('is_read', false)
 
-      if (error) {
-        console.error("Error fetching unread count:", error)
-      } else {
+      if (!error) {
         setUnreadCount(count || 0)
       }
     }
 
     fetchUnreadCount()
 
-    // Real-time subscription to keep the badge updated
+    // Thiết lập lắng nghe thay đổi
     const channel = supabase
       .channel('schema-db-changes')
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'chat_messages' 
-      }, (payload) => {
-        const newPayload = payload.new as NewChatMessagePayload; // Type assertion for payload.new
-        // Only increment if the message is for this user and unread
-        if (newPayload.receiver_id === userId && !newPayload.is_read) {
-          setUnreadCount((prev) => prev + 1)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages'
+        },
+        (payload) => {
+          const newPayload = payload.new as any
+          if (newPayload.receiver_id === userId && !newPayload.is_read) {
+            setUnreadCount((prev) => prev + 1)
+          }
         }
-      })
+      )
       .subscribe()
 
+    // Cleanup khi component unmount hoặc userId thay đổi
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [userId]) // Re-run effect when userId changes
+  }, [userId])
 
   return (
     <header>
-      {/* Your navigation logic here */}
-      <span>Unread Messages: {unreadCount}</span>
+      {/* Code giao diện của bạn tại đây */}
+      <div>Số tin nhắn chưa đọc: {unreadCount}</div>
     </header>
   )
 }
