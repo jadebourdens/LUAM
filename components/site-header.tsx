@@ -395,13 +395,25 @@ function SiteHeaderInner() {
         return
       }
 
-      const { count } = await supabase
-        .from('chat_messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('receiver_id', currentUser.id)
-        .eq('is_read', false)
+      // Count messages sent by others in conversations where user is participant
+      const { data: userConvos } = await supabase
+        .from('conversations')
+        .select('id')
+        .or(`buyer_id.eq.${currentUser.id},seller_id.eq.${currentUser.id}`)
 
-      setUnreadCount(count || 0)
+      const convoIds = (userConvos || []).map((c: any) => c.id)
+
+      if (convoIds.length > 0) {
+        const { count } = await supabase
+          .from('chat_messages')
+          .select('*', { count: 'exact', head: true })
+          .in('conversation_id', convoIds)
+          .neq('sender_id', currentUser.id)
+
+        setUnreadCount(count || 0)
+      } else {
+        setUnreadCount(0)
+      }
 
       if (subscriptionRef.current) supabase.removeChannel(subscriptionRef.current)
 
@@ -413,10 +425,9 @@ function SiteHeaderInner() {
             event:  'INSERT',
             schema: 'public',
             table:  'chat_messages',
-            filter: `receiver_id=eq.${currentUser.id}`,
           },
           (payload) => {
-            if (payload.new && !payload.new.is_read) {
+            if (payload.new && payload.new.sender_id !== currentUser.id) {
               setUnreadCount((prev) => prev + 1)
             }
           },

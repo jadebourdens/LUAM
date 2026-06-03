@@ -142,14 +142,19 @@ export default function MessagesPage() {
 
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim() || !activeConversation || !user) return
+    
+    // Explicitly add sender_id here
     const { error } = await supabase.from('chat_messages').insert({
       conversation_id: activeConversation.id,
-      sender_id: user.id,
+      sender_id: user.id, // Ensure this matches your user ID
       content: content.trim(),
     })
+    
     if (!error) {
       setNewMessage('')
       loadMessages(activeConversation.id)
+    } else {
+      console.error("Supabase Error:", error)
     }
   }, [activeConversation, user, supabase, loadMessages])
 
@@ -177,7 +182,7 @@ export default function MessagesPage() {
       .from('conversations')
       .select(`*, listing:listings(id, title, price_usd, price_vnd, currency, images), buyer:profiles!conversations_buyer_id_fkey(id, username, full_name, avatar_url), seller:profiles!conversations_seller_id_fkey(id, username, full_name, avatar_url)`)
       .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
-      .order('updated_at', { ascending: false })
+      .order('last_message_at', { ascending: false })
 
     setConversations(convos || [])
 
@@ -203,7 +208,7 @@ export default function MessagesPage() {
         .from('conversations')
         .select(`*, listing:listings(id, title, price_usd, price_vnd, currency, images), buyer:profiles!conversations_buyer_id_fkey(id, username, full_name, avatar_url), seller:profiles!conversations_seller_id_fkey(id, username, full_name, avatar_url)`)
         .or(`buyer_id.eq.${session.user.id},seller_id.eq.${session.user.id}`)
-        .order('updated_at', { ascending: false })
+        .order('last_message_at', { ascending: false })
 
       if (convos && convos.length > 0) {
         setConversations(convos)
