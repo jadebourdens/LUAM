@@ -158,6 +158,25 @@ function PlusIcon() {
   )
 }
 
+function FilterIcon() {
+  return (
+    <svg {...BASE_ICON} width={18} height={18}>
+      <line x1="4" y1="6" x2="20" y2="6" />
+      <line x1="4" y1="12" x2="20" y2="12" />
+      <line x1="4" y1="18" x2="20" y2="18" />
+    </svg>
+  )
+}
+
+function SearchIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.35-4.35" />
+    </svg>
+  )
+}
+
 function ChevronDown({ active }: { active: boolean }) {
   return (
     <svg
@@ -178,17 +197,19 @@ function ChevronDown({ active }: { active: boolean }) {
 // IconLink
 // ─────────────────────────────────────────────
 
-function IconLink({
-  href,
-  label,
-  children,
-  badge,
-}: {
-  href: string
-  label: string
-  children: React.ReactNode
-  badge?: number
-}) {
+function IconLink(
+  {
+    href,
+    label,
+    children,
+    badge,
+  }: {
+    href: string
+    label: string
+    children: React.ReactNode
+    badge?: number
+  }
+) {
   return (
     <Link
       href={href}
@@ -226,9 +247,12 @@ function LanguagePicker() {
   }, [open])
 
   const getLocalePath = (code: string) => {
-    const locale   = code.toLowerCase()
-    const stripped = pathname.replace(/^\/(en|vi)/, '') || '/'
-    return `/${locale}${stripped}`
+    const locale = code.toLowerCase()
+    let path = pathname
+    if (pathname.startsWith('/en/')) path = pathname.slice(3)
+    else if (pathname.startsWith('/vi/')) path = pathname.slice(3)
+    else if (pathname === '/en' || pathname === '/vi') path = '/'
+    return `/${locale}${path}`
   }
 
   return (
@@ -236,7 +260,7 @@ function LanguagePicker() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1 h-9 px-2 rounded-full text-stone-700 hover:text-[#FF5722] hover:bg-stone-100 transition-colors text-xs font-medium"
+        className="inline-flex items-center gap-1 h-10 px-3 rounded-full text-stone-700 hover:text-[#FF5722] hover:bg-stone-100 transition-colors text-xs font-medium"
       >
         <GlobeIcon />
         <span>{currentLocale}</span>
@@ -262,6 +286,46 @@ function LanguagePicker() {
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────
+// SearchBar
+// ─────────────────────────────────────────────
+
+function SearchBar() {
+  const pathname = usePathname()
+  const locale = pathname.startsWith('/vi') ? 'vi' : 'en'
+
+  return (
+    <div className="flex items-center gap-3">
+      <form
+        action={`/${locale}`}
+        method="GET"
+        className="relative flex-1"
+      >
+        <input
+          type="text"
+          name="q"
+          placeholder={locale === 'vi' ? 'Tìm kiếm...' : 'Search...'}
+          className="w-full h-10 pl-10 pr-4 text-sm bg-stone-100 border border-stone-200 rounded-full text-stone-900 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-[#FF5722] focus:bg-white transition-colors"
+        />
+        <button
+          type="submit"
+          className="absolute left-0 top-0 h-10 w-10 flex items-center justify-center text-stone-500 hover:text-[#FF5722] transition-colors flex-shrink-0"
+          aria-label={locale === 'vi' ? 'Tìm kiếm' : 'Search'}
+        >
+          <SearchIcon />
+        </button>
+      </form>
+      <button
+        type="button"
+        className="inline-flex items-center justify-center h-10 w-10 flex-shrink-0 bg-stone-100 border border-stone-200 rounded-full text-stone-700 hover:text-[#FF5722] hover:bg-stone-50 transition-colors"
+        title="Open filters"
+      >
+        <FilterIcon />
+      </button>
     </div>
   )
 }
@@ -442,45 +506,30 @@ function SiteHeaderInner() {
     >
       {/* ── Top bar ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-        <div className="flex flex-wrap lg:flex-nowrap items-center gap-2 lg:gap-3">
+        <div className="flex items-center justify-between gap-3">
 
           {/* Logo */}
           <Link
             href={`/${locale}`}
-            className="text-2xl font-black tracking-tight select-none whitespace-nowrap"
+            className="text-2xl font-black tracking-tight select-none whitespace-nowrap flex-shrink-0"
           >
             <span className="text-stone-900">lu</span>
             <span className="text-[#FF5722]">a</span>
             <span className="text-stone-900">m</span>
           </Link>
 
-          {/* Search */}
-          <form
-            action={`/${locale}`}
-            method="get"
-            className="w-full sm:w-auto sm:flex-1 max-w-sm lg:max-w-md flex flex-nowrap items-center gap-2"
-          >
-            <input
-              type="text"
-              name="q"
-              placeholder={t('search')}
-              className="w-full border border-stone-200 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]"
-            />
-            <button
-              type="submit"
-              className="bg-[#FF5722] text-white px-4 py-1.5 text-sm rounded-full hover:bg-[#E64A19] transition-colors whitespace-nowrap"
-            >
-              {t('search')}
-            </button>
-          </form>
+          {/* Search + Filter */}
+          <div className="flex-1 px-4">
+            <SearchBar />
+          </div>
 
           {/* Action icons */}
-          <div className="w-full lg:w-auto lg:ml-auto flex flex-wrap items-center gap-1 justify-start lg:justify-end">
+          <div className="flex items-center gap-1 flex-shrink-0">
             {user ? (
               <>
                 <Link
                   href={`/${locale}/listings/new`}
-                  className="inline-flex items-center gap-1 bg-[#FF5722] text-white text-sm font-medium px-4 py-1.5 rounded-full hover:bg-[#E64A19] transition-colors shadow-sm mr-1"
+                  className="inline-flex items-center gap-1 bg-[#FF5722] text-white text-sm font-medium px-4 py-2.5 rounded-full hover:bg-[#E64A19] transition-colors shadow-sm"
                 >
                   <PlusIcon /> {t('sell')}
                 </Link>
@@ -520,7 +569,7 @@ function SiteHeaderInner() {
                 </Link>
                 <Link
                   href={`/${locale}/auth/signup`}
-                  className="bg-[#FF5722] text-white text-sm px-4 py-1.5 rounded-full hover:bg-[#E64A19] transition-colors shadow-sm"
+                  className="bg-[#FF5722] text-white text-sm px-4 py-2.5 rounded-full hover:bg-[#E64A19] transition-colors shadow-sm"
                 >
                   {t('signup')}
                 </Link>
