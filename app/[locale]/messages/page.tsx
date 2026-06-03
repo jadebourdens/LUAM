@@ -140,13 +140,28 @@ export default function MessagesPage() {
     if (!error) setMessages(data || [])
   }, [supabase])
 
+  const markAsRead = useCallback(async (convoId: string) => {
+    if (!user) return
+    await supabase
+      .from('chat_messages')
+      .update({ read: true })
+      .eq('conversation_id', convoId)
+      .eq('receiver_id', user.id)
+      .eq('read', false)
+  }, [supabase, user])
+
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim() || !activeConversation || !user) return
     
     // Explicitly add sender_id here
+    const receiverId = activeConversation.buyer_id === user.id
+      ? activeConversation.seller_id
+      : activeConversation.buyer_id
+
     const { error } = await supabase.from('chat_messages').insert({
       conversation_id: activeConversation.id,
-      sender_id: user.id, // Ensure this matches your user ID
+      sender_id: user.id,
+      receiver_id: receiverId,
       content: content.trim(),
     })
     
@@ -274,7 +289,7 @@ export default function MessagesPage() {
                       className={`group w-full px-4 py-3 border-b border-gray-50 text-left flex items-center gap-3 cursor-pointer transition-colors ${
                         activeConversation?.id === c.id ? 'bg-orange-50 border-l-4 border-l-[#FF5722]' : 'hover:bg-gray-50'
                       }`}
-                      onClick={() => { setActiveConversation(c); loadMessages(c.id); setShowOffer(false) }}
+                      onClick={() => { setActiveConversation(c); loadMessages(c.id); markAsRead(c.id); setShowOffer(false) }}
                     >
                       <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-100">
                         {thumbnailUrl ? (

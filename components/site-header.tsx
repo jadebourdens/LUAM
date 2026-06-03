@@ -395,25 +395,14 @@ function SiteHeaderInner() {
         return
       }
 
-      // Count messages sent by others in conversations where user is participant
-      const { data: userConvos } = await supabase
-        .from('conversations')
-        .select('id')
-        .or(`buyer_id.eq.${currentUser.id},seller_id.eq.${currentUser.id}`)
+      // Count unread messages where current user is receiver
+      const { count } = await supabase
+        .from('chat_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('receiver_id', currentUser.id)
+        .eq('read', false)
 
-      const convoIds = (userConvos || []).map((c: any) => c.id)
-
-      if (convoIds.length > 0) {
-        const { count } = await supabase
-          .from('chat_messages')
-          .select('*', { count: 'exact', head: true })
-          .in('conversation_id', convoIds)
-          .neq('sender_id', currentUser.id)
-
-        setUnreadCount(count || 0)
-      } else {
-        setUnreadCount(0)
-      }
+      setUnreadCount(count || 0)
 
       if (subscriptionRef.current) supabase.removeChannel(subscriptionRef.current)
 
@@ -427,7 +416,7 @@ function SiteHeaderInner() {
             table:  'chat_messages',
           },
           (payload) => {
-            if (payload.new && payload.new.sender_id !== currentUser.id) {
+            if (payload.new && payload.new.receiver_id === currentUser.id && !payload.new.read) {
               setUnreadCount((prev) => prev + 1)
             }
           },

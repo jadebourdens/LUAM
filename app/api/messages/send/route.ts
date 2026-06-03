@@ -48,6 +48,7 @@ export async function POST(req: Request) {
       .insert({
         conversation_id: conversationId,
         sender_id: user.id,
+        receiver_id: convo.buyer_id === user.id ? convo.seller_id : convo.buyer_id,
         content: content.trim(),
       })
       .select('*')
