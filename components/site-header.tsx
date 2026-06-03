@@ -294,7 +294,7 @@ function LanguagePicker() {
 // SearchBar
 // ─────────────────────────────────────────────
 
-function SearchBar() {
+function SearchBar({ onToggleFilters }: { onToggleFilters: () => void }) {
   const pathname = usePathname()
   const locale = pathname.startsWith('/vi') ? 'vi' : 'en'
 
@@ -321,8 +321,9 @@ function SearchBar() {
       </form>
       <button
         type="button"
+        onClick={onToggleFilters}
         className="inline-flex items-center justify-center h-10 w-10 flex-shrink-0 bg-stone-100 border border-stone-200 rounded-full text-stone-700 hover:text-[#FF5722] hover:bg-stone-50 transition-colors"
-        title="Open filters"
+        title="Toggle filters"
       >
         <FilterIcon />
       </button>
@@ -440,6 +441,7 @@ function SiteHeaderInner() {
   const t               = useTranslations('Nav')
   const [user, setUser] = useState<any>(null)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [showFilters, setShowFilters] = useState(false)
   const locale          = pathname.startsWith('/vi') ? 'vi' : 'en'
   const subscriptionRef = useRef<any>(null)
 
@@ -520,7 +522,7 @@ function SiteHeaderInner() {
 
           {/* Search + Filter */}
           <div className="flex-1 px-4">
-            <SearchBar />
+            <SearchBar onToggleFilters={() => setShowFilters((v) => !v)} />
           </div>
 
           {/* Action icons */}
@@ -580,6 +582,26 @@ function SiteHeaderInner() {
       </div>
 
       {/* ── Category nav ── */}
+      {showFilters && (
+        <div className="bg-stone-50 border-b border-stone-100 px-4 sm:px-6 lg:px-8 py-3">
+          <div className="max-w-7xl mx-auto">
+            <form action={`/${locale}`} method="get" className="flex flex-wrap items-center gap-2">
+              <input name="minPrice" type="number" min="0" placeholder={t('min_price') || 'Min Price'} className="w-24 px-3 py-1.5 text-sm rounded-lg border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]" />
+              <input name="maxPrice" type="number" min="0" placeholder={t('max_price') || 'Max Price'} className="w-24 px-3 py-1.5 text-sm rounded-lg border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]" />
+              <input name="size" type="text" placeholder={t('size') || 'Size'} className="w-20 px-3 py-1.5 text-sm rounded-lg border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]" />
+              <select name="condition" className="px-3 py-1.5 text-sm rounded-lg border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]">
+                <option value="">{t('any_condition') || 'Any Condition'}</option>
+                <option value="new">{t('new') || 'New'}</option>
+                <option value="like_new">{t('like_new') || 'Like New'}</option>
+                <option value="good">{t('good') || 'Good'}</option>
+                <option value="fair">{t('fair') || 'Fair'}</option>
+                <option value="worn">{t('worn') || 'Worn'}</option>
+              </select>
+              <button type="submit" className="bg-[#FF5722] text-white px-4 py-1.5 text-sm rounded-lg font-medium hover:bg-[#E64A19] transition-colors shadow-sm">{t('apply') || 'Apply'}</button>
+            </form>
+          </div>
+        </div>
+      )}
       <CategoryNav />
     </header>
   )

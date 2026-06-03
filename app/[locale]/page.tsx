@@ -114,28 +114,6 @@ export default async function Home({
 
   return (
     <div className="min-h-screen bg-stone-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="bg-white rounded-xl shadow-sm border border-stone-100 px-4 py-3">
-          <form action={`/${locale}`} method="get" className="flex flex-wrap items-center gap-2">
-            <input name="q" defaultValue={q} type="text" placeholder={t('keyword')} className="flex-1 min-w-[140px] px-3 py-1.5 text-sm rounded-lg border border-stone-200 bg-stone-50 text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]" />
-            <input name="minPrice" defaultValue={sp.minPrice || ''} type="number" min="0" placeholder={t('min')} className="w-20 px-2 py-1.5 text-sm rounded-lg border border-stone-200 bg-stone-50 text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]" />
-            <input name="maxPrice" defaultValue={sp.maxPrice || ''} type="number" min="0" placeholder={t('max')} className="w-20 px-2 py-1.5 text-sm rounded-lg border border-stone-200 bg-stone-50 text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]" />
-            <input name="size" defaultValue={size} type="text" placeholder={t('size')} className="w-20 px-2 py-1.5 text-sm rounded-lg border border-stone-200 bg-stone-50 text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]" />
-            <select name="condition" defaultValue={condition} className="px-2 py-1.5 text-sm rounded-lg border border-stone-200 bg-stone-50 text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]">
-              <option value="">{t('any_condition')}</option>
-              <option value="new">{t('new')}</option>
-              <option value="like_new">{t('like_new')}</option>
-              <option value="good">{t('good')}</option>
-              <option value="fair">{t('fair')}</option>
-              <option value="worn">{t('worn')}</option>
-            </select>
-            <input type="hidden" name="category" value={selectedCategory} />
-            <button type="submit" className="bg-[#FF5722] text-white px-4 py-1.5 text-sm rounded-lg font-medium hover:bg-[#E64A19] transition-colors shadow-sm">{t('apply')}</button>
-            <Link href={`/${locale}`} className="text-stone-400 hover:text-stone-600 px-2 py-1.5 text-sm transition-colors">{t('clear')}</Link>
-          </form>
-        </div>
-      </div>
-
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-stone-900 inline-block">
