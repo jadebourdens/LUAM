@@ -526,13 +526,13 @@ export default function MessagesPage() {
                   {/* Seller: Mark as Completed button */}
                   {showMarkCompletedBtn && (
                     <div className="px-6 py-3 bg-purple-50 border-t border-purple-200 flex items-center justify-between gap-3">
-                      <p className="text-sm text-purple-800">Verified payment received?</p>
+                      <p className="text-sm text-purple-800">{t('mark_completed_prompt')}</p>
                       <button
                         onClick={handleMarkCompleted}
                         disabled={statusUpdating}
                         className="shrink-0 px-4 py-2 rounded-xl bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 disabled:opacity-50 transition-colors"
                       >
-                        {statusUpdating ? '...' : '✅ Mark as Completed'}
+                        {statusUpdating ? '...' : t('mark_completed_button')}
                       </button>
                     </div>
                   )}
