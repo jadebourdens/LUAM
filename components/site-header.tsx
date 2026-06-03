@@ -438,7 +438,8 @@ function CategoryNav() {
 
 function SiteHeaderInner() {
   const pathname        = usePathname()
-  const t               = useTranslations('Nav')
+  const tNav            = useTranslations('Nav')
+  const tHome           = useTranslations('Home')
   const [user, setUser] = useState<any>(null)
   const [unreadCount, setUnreadCount] = useState(0)
   const [showFilters, setShowFilters] = useState(false)
@@ -533,19 +534,19 @@ function SiteHeaderInner() {
                   href={`/${locale}/listings/new`}
                   className="inline-flex items-center gap-1 bg-[#FF5722] text-white text-sm font-medium px-4 py-2.5 rounded-full hover:bg-[#E64A19] transition-colors shadow-sm"
                 >
-                  <PlusIcon /> {t('sell')}
+                  <PlusIcon /> {tNav('sell')}
                 </Link>
 
-                <IconLink href={`/${locale}/messages`} label={t('messages')} badge={unreadCount}>
+                <IconLink href={`/${locale}/messages`} label={tNav('messages')} badge={unreadCount}>
                   <MessageIcon />
                 </IconLink>
-                <IconLink href={`/${locale}/favorites`} label={t('wishlist')}>
+                <IconLink href={`/${locale}/favorites`} label={tNav('wishlist')}>
                   <HeartIcon />
                 </IconLink>
-                <IconLink href={`/${locale}/orders`} label={t('orders')}>
+                <IconLink href={`/${locale}/orders`} label={tNav('orders')}>
                   <BagIcon />
                 </IconLink>
-                <IconLink href={`/${locale}/profile`} label={t('account')}>
+                <IconLink href={`/${locale}/profile`} label={tNav('account')}>
                   <UserIcon />
                 </IconLink>
 
@@ -556,7 +557,7 @@ function SiteHeaderInner() {
                     type="submit"
                     className="text-xs text-stone-500 hover:text-stone-900 px-2 py-1.5 ml-1"
                   >
-                    {t('signout')}
+                    {tNav('signout')}
                   </button>
                 </form>
               </>
@@ -567,13 +568,13 @@ function SiteHeaderInner() {
                   href={`/${locale}/auth/login`}
                   className="text-sm text-stone-700 hover:text-stone-900 px-2"
                 >
-                  {t('signin')}
+                  {tNav('signin')}
                 </Link>
                 <Link
                   href={`/${locale}/auth/signup`}
                   className="bg-[#FF5722] text-white text-sm px-4 py-2.5 rounded-full hover:bg-[#E64A19] transition-colors shadow-sm"
                 >
-                  {t('signup')}
+                  {tNav('signup')}
                 </Link>
               </>
             )}
@@ -586,18 +587,18 @@ function SiteHeaderInner() {
         <div className="bg-stone-50 border-b border-stone-100 px-4 sm:px-6 lg:px-8 py-3">
           <div className="max-w-7xl mx-auto">
             <form action={`/${locale}`} method="get" className="flex flex-wrap items-center gap-2">
-              <input name="minPrice" type="number" min="0" placeholder={t('min_price') || 'Min Price'} className="w-24 px-3 py-1.5 text-sm rounded-lg border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]" />
-              <input name="maxPrice" type="number" min="0" placeholder={t('max_price') || 'Max Price'} className="w-24 px-3 py-1.5 text-sm rounded-lg border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]" />
-              <input name="size" type="text" placeholder={t('size') || 'Size'} className="w-20 px-3 py-1.5 text-sm rounded-lg border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]" />
+              <input name="minPrice" type="number" min="0" placeholder={tHome('min') || 'Min'} className="w-24 px-3 py-1.5 text-sm rounded-lg border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]" />
+              <input name="maxPrice" type="number" min="0" placeholder={tHome('max') || 'Max'} className="w-24 px-3 py-1.5 text-sm rounded-lg border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]" />
+              <input name="size" type="text" placeholder={tHome('size') || 'Size'} className="w-20 px-3 py-1.5 text-sm rounded-lg border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]" />
               <select name="condition" className="px-3 py-1.5 text-sm rounded-lg border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]">
-                <option value="">{t('any_condition') || 'Any Condition'}</option>
-                <option value="new">{t('new') || 'New'}</option>
-                <option value="like_new">{t('like_new') || 'Like New'}</option>
-                <option value="good">{t('good') || 'Good'}</option>
-                <option value="fair">{t('fair') || 'Fair'}</option>
-                <option value="worn">{t('worn') || 'Worn'}</option>
+                <option value="">{tHome('any_condition') || 'Any Condition'}</option>
+                <option value="new">{tHome('new') || 'New'}</option>
+                <option value="like_new">{tHome('like_new') || 'Like New'}</option>
+                <option value="good">{tHome('good') || 'Good'}</option>
+                <option value="fair">{tHome('fair') || 'Fair'}</option>
+                <option value="worn">{tHome('worn') || 'Worn'}</option>
               </select>
-              <button type="submit" className="bg-[#FF5722] text-white px-4 py-1.5 text-sm rounded-lg font-medium hover:bg-[#E64A19] transition-colors shadow-sm">{t('apply') || 'Apply'}</button>
+              <button type="submit" className="bg-[#FF5722] text-white px-4 py-1.5 text-sm rounded-lg font-medium hover:bg-[#E64A19] transition-colors shadow-sm">{tHome('apply') || 'Apply'}</button>
             </form>
           </div>
         </div>
