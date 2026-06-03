@@ -11,6 +11,35 @@ interface Props {
   defaultCategorySlug?: string
 }
 
+// ─────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────
+
+const COLORS = [
+  'Black', 'White', 'Red', 'Blue', 'Green', 'Yellow',
+  'Beige', 'Brown', 'Grey', 'Pink', 'Purple', 'Orange',
+  'Navy', 'Cream', 'Silver', 'Gold', 'Multi',
+]
+
+// Size options by category
+const SIZE_OPTIONS_BY_CATEGORY: Record<string, string[]> = {
+  'women': ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+  'women-clothes': ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+  'women-shoes': ['35', '36', '37', '38', '39', '40', '41', '42'],
+  'women-bags': ['One size'],
+  'women-accessories': ['One size'],
+  'men': ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'],
+  'men-clothes': ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'],
+  'men-shoes': ['35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46'],
+  'men-bags': ['One size'],
+  'men-accessories': ['One size'],
+  'kids': ['2', '3', '4', '5', '6', '7', '8', '9', '10'],
+  'kids-clothes': ['2', '3', '4', '5', '6', '7', '8', '9', '10'],
+  'kids-shoes': ['24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35'],
+  'kids-bags': ['One size'],
+  'kids-games': ['One size'],
+}
+
 export default function SellForm({ locale, onSuccess, defaultCategorySlug }: Props) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -20,6 +49,12 @@ export default function SellForm({ locale, onSuccess, defaultCategorySlug }: Pro
   const [error, setError] = useState<string | null>(null)
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([])
+  const [brands, setBrands] = useState<string[]>([])
+
+  // Brand combobox state
+  const [brandInput, setBrandInput] = useState('')
+  const [showBrandSuggestions, setShowBrandSuggestions] = useState(false)
+  const [selectedBrand, setSelectedBrand] = useState('')
 
   const [form, setForm] = useState({
     title: '',
@@ -28,14 +63,25 @@ export default function SellForm({ locale, onSuccess, defaultCategorySlug }: Pro
     currency: 'EUR',
     category_id: '',
     condition: 'good',
-    brand: '',
     size: '',
     color: '',
   })
 
+  // Get available sizes based on selected category
+  const getAvailableSizes = () => {
+    if (!form.category_id) return []
+    const matchedCategory = categories.find((c) => c.id === form.category_id)
+    if (!matchedCategory) return []
+    const slug = matchedCategory.slug
+    return SIZE_OPTIONS_BY_CATEGORY[slug] || []
+  }
+
+  const availableSizes = getAvailableSizes()
+
   useEffect(() => {
     const supabase = createClient()
-    // Added .is('parent_id', null) to exclude sub-categories
+    
+    // Fetch categories
     supabase.from('categories').select('id, name, slug').is('parent_id', null).order('name').then(({ data }) => {
       if (data) {
         setCategories(data)
@@ -43,6 +89,13 @@ export default function SellForm({ locale, onSuccess, defaultCategorySlug }: Pro
           const match = data.find((c) => c.slug === defaultCategorySlug)
           if (match) setForm((f) => ({ ...f, category_id: match.id }))
         }
+      }
+    })
+
+    // Fetch brands from DB
+    supabase.from('brands').select('name').order('usage_count', { ascending: false }).then(({ data }) => {
+      if (data) {
+        setBrands(data.map((b) => b.name))
       }
     })
   }, [defaultCategorySlug])
@@ -80,6 +133,22 @@ export default function SellForm({ locale, onSuccess, defaultCategorySlug }: Pro
     setPreviewUrls((prev) => prev.filter((_, i) => i !== index))
   }
 
+  const handleBrandSelect = (brand: string) => {
+    setSelectedBrand(brand)
+    setBrandInput(brand)
+    setShowBrandSuggestions(false)
+  }
+
+  const handleBrandInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setBrandInput(e.target.value)
+    setShowBrandSuggestions(true)
+    if (!e.target.value) setSelectedBrand('')
+  }
+
+  const filteredBrands = brandInput
+    ? brands.filter((b) => b.toLowerCase().includes(brandInput.toLowerCase()))
+    : brands.slice(0, 8)
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.title || !form.price || !form.category_id) {
@@ -92,6 +161,15 @@ export default function SellForm({ locale, onSuccess, defaultCategorySlug }: Pro
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setError('You must be logged in.'); setSubmitting(false); return }
+
+    // Auto-save new brand if it's not in DB yet
+    if (selectedBrand && !brands.includes(selectedBrand)) {
+      const { error: brandError } = await supabase.from('brands').insert({ name: selectedBrand, usage_count: 1 })
+      // Ignore conflict if brand already exists (race condition)
+      if (brandError && brandError.code !== '23505') {
+        console.warn('Brand insert warning:', brandError)
+      }
+    }
 
     const priceNum = parseFloat(form.price)
     const { data: listing, error: listingError } = await supabase
@@ -106,7 +184,7 @@ export default function SellForm({ locale, onSuccess, defaultCategorySlug }: Pro
         currency: form.currency,
         category_id: form.category_id,
         condition: form.condition,
-        brand: form.brand || null,
+        brand: selectedBrand || null,
         size: form.size || null,
         color: form.color || null,
         status: 'active',
@@ -221,17 +299,51 @@ export default function SellForm({ locale, onSuccess, defaultCategorySlug }: Pro
 
       {/* Brand / Size / Color */}
       <div className="grid grid-cols-3 gap-3">
+        {/* Brand – Creatable Combobox */}
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-1">Brand</label>
-          <input value={form.brand} onChange={set('brand')} placeholder="e.g. Nike" className="w-full border border-stone-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]" />
+          <div className="relative">
+            <input
+              type="text"
+              value={brandInput}
+              onChange={handleBrandInputChange}
+              onFocus={() => setShowBrandSuggestions(true)}
+              placeholder="Type brand name..."
+              className="w-full border border-stone-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]"
+            />
+            {showBrandSuggestions && filteredBrands.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-stone-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                {filteredBrands.map((brand) => (
+                  <button
+                    key={brand}
+                    type="button"
+                    onClick={() => handleBrandSelect(brand)}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-stone-50 border-b border-stone-100 last:border-b-0"
+                  >
+                    {brand}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Size – Context-aware Dropdown */}
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-1">Size</label>
-          <input value={form.size} onChange={set('size')} placeholder="e.g. M, 42" className="w-full border border-stone-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]" />
+          <select value={form.size} onChange={set('size')} disabled={!form.category_id || availableSizes.length === 0} className="w-full border border-stone-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722] disabled:bg-stone-100 disabled:text-stone-500 disabled:cursor-not-allowed">
+            <option value="">{form.category_id ? 'Select size' : 'Choose category first'}</option>
+            {availableSizes.map((size) => <option key={size} value={size}>{size}</option>)}
+          </select>
         </div>
+
+        {/* Color – Fixed Dropdown */}
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-1">Color</label>
-          <input value={form.color} onChange={set('color')} placeholder="e.g. Black" className="w-full border border-stone-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]" />
+          <select value={form.color} onChange={set('color')} className="w-full border border-stone-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]">
+            <option value="">Select color</option>
+            {COLORS.map((color) => <option key={color} value={color}>{color}</option>)}
+          </select>
         </div>
       </div>
 
