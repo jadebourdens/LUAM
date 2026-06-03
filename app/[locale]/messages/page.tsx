@@ -108,7 +108,6 @@ function NegotiationOffer({ totalPrice, currency, onOfferConfirm, onClose }: Neg
   )
 }
 
-// Bank details card shown to buyer after seller accepts
 function BankDetailsCard({ seller, agreedPrice, currency }: { seller: any; agreedPrice: number; currency: Currency }) {
   return (
     <div className="mx-6 my-3 rounded-2xl border border-green-200 bg-green-50 p-4">
@@ -147,14 +146,13 @@ function BankDetailsCard({ seller, agreedPrice, currency }: { seller: any; agree
   )
 }
 
-// Status banner shown in chat header area
 function StatusBanner({ status, agreedPrice, currency }: { status: ConvoStatus; agreedPrice?: number; currency: Currency }) {
   if (status === 'open') return null
   const configs: Record<string, { bg: string; icon: string; label: string }> = {
-    accepted:                 { bg: 'bg-green-50 border-green-200 text-green-800',  icon: '✅', label: 'Offer accepted' + (agreedPrice ? ` — ${fmtMoney(agreedPrice, currency)}` : '') },
-    waiting_for_verification: { bg: 'bg-blue-50 border-blue-200 text-blue-800',     icon: '⏳', label: 'Waiting for seller to confirm payment' },
+    accepted:                 { bg: 'bg-green-50 border-green-200 text-green-800',    icon: '✅', label: 'Offer accepted' + (agreedPrice ? ` — ${fmtMoney(agreedPrice, currency)}` : '') },
+    waiting_for_verification: { bg: 'bg-blue-50 border-blue-200 text-blue-800',       icon: '⏳', label: 'Waiting for seller to confirm payment' },
     completed:                { bg: 'bg-purple-50 border-purple-200 text-purple-800', icon: '🎉', label: 'Transaction complete' },
-    cancelled:                { bg: 'bg-red-50 border-red-200 text-red-800',        icon: '❌', label: 'Transaction cancelled' },
+    cancelled:                { bg: 'bg-red-50 border-red-200 text-red-800',          icon: '❌', label: 'Transaction cancelled' },
   }
   const cfg = configs[status]
   if (!cfg) return null
@@ -192,7 +190,6 @@ export default function MessagesPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Parse most recent offer from messages
   useEffect(() => {
     if (!messages.length) { setPendingOfferAmount(null); return }
     for (let i = messages.length - 1; i >= 0; i--) {
@@ -367,10 +364,10 @@ export default function MessagesPage() {
   const agreedPrice: number = activeConversation?.agreed_price ?? 0
   const sellerProfile = activeConversation?.seller
 
-  const showAcceptBtn = isSeller && convoStatus === 'open' && pendingOfferAmount !== null
-  const showTransferredBtn = isBuyer && convoStatus === 'accepted'
+  const showAcceptBtn        = isSeller && convoStatus === 'open' && pendingOfferAmount !== null
+  const showTransferredBtn   = isBuyer  && convoStatus === 'accepted'
   const showMarkCompletedBtn = isSeller && convoStatus === 'waiting_for_verification'
-  const showBankDetails = isBuyer && (convoStatus === 'accepted' || convoStatus === 'waiting_for_verification')
+  const showBankDetails      = isBuyer  && (convoStatus === 'accepted' || convoStatus === 'waiting_for_verification')
 
   return (
     <>
@@ -399,6 +396,7 @@ export default function MessagesPage() {
           <h1 className="text-2xl font-bold text-gray-900 mb-3 shrink-0">{t('title')}</h1>
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-1 min-h-0 overflow-hidden">
+
             {/* Sidebar */}
             <div className="w-72 border-r border-gray-100 flex flex-col shrink-0">
               <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
@@ -421,7 +419,7 @@ export default function MessagesPage() {
                     >
                       <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-100">
                         {thumbnailUrl ? (
-                          <img src={thumbnailUrl} alt={c.listing?.title} className="w-full h-full object-cover" />
+                          <img src={thumbnailUrl} alt={c.listing?.title} width={48} height={48} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-300 text-[10px]">{t('no_img')}</div>
                         )}
@@ -429,7 +427,7 @@ export default function MessagesPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           {otherUser?.avatar_url && (
-                            <img src={otherUser.avatar_url} alt={otherUser.username} className="w-6 h-6 rounded-full object-cover shrink-0" />
+                            <img src={otherUser.avatar_url} alt={otherUser.username} width={24} height={24} className="w-6 h-6 rounded-full object-cover shrink-0" />
                           )}
                           <p className="font-semibold text-sm truncate">{otherUser?.username}</p>
                         </div>
@@ -447,4 +445,120 @@ export default function MessagesPage() {
                       </button>
                     </div>
                   )
-                })}\n              </div>\n            </div>\n\n            {/* Chat area */}\n            <div className=\"flex-1 flex flex-col min-h-0\">\n              {!activeConversation ? (\n                <div className=\"flex items-center justify-center h-full text-gray-400 text-sm\">\n                  {t('select_conversation')}\n                </div>\n              ) : (\n                <>\n                  {/* Status banner */}\n                  <StatusBanner status={convoStatus} agreedPrice={agreedPrice} currency={offerCurrency} />\n\n                  {/* Messages */}\n                  <div className=\"flex-1 overflow-y-auto px-6 py-4 space-y-4\">\n                    {messages.map((msg: any) => {\n                      const isOwn = msg.sender_id === user?.id\n                      return (\n                        <div key={msg.id} className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>\n                          <div className=\"w-8 h-8 rounded-full bg-gray-200 shrink-0 overflow-hidden flex items-center justify-center\">\n                            {msg.sender?.avatar_url ? (\n                              <img src={msg.sender.avatar_url} alt={msg.sender.username} className=\"w-full h-full object-cover\" />\n                            ) : (\n                              <span className=\"text-xs text-gray-500\">{msg.sender?.username?.[0]?.toUpperCase()}</span>\n                            )}\n                          </div>\n                          <div className={`flex flex-col gap-1 max-w-xs ${isOwn ? 'items-end' : ''}`}>\n                            <p className=\"text-xs text-gray-500\">{msg.sender?.username}</p>\n                            <div className={`rounded-lg px-4 py-3 text-sm break-words ${\n                              isOwn\n                                ? 'bg-[#FF5722] text-white'\n                                : 'bg-gray-100 text-gray-900'\n                            }`}>\n                              {msg.content}\n                            </div>\n                            <p className=\"text-xs text-gray-400\">\n                              {new Date(msg.created_at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}\n                            </p>\n                          </div>\n                        </div>\n                      )\n                    })}\n                    <div ref={messagesEndRef} />\n                  </div>\n\n                  {/* Bank details card */}\n                  {showBankDetails && sellerProfile && (\n                    <BankDetailsCard seller={sellerProfile} agreedPrice={agreedPrice} currency={offerCurrency} />\n                  )}\n\n                  {/* Action buttons */}\n                  <div className=\"border-t border-gray-100 px-6 py-4 flex gap-2 flex-wrap\">\n                    {showAcceptBtn && (\n                      <button\n                        onClick={handleAcceptOffer}\n                        disabled={statusUpdating}\n                        className=\"flex-1 min-w-fit px-4 py-3 rounded-xl bg-green-600 text-white font-semibold text-sm hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all\"\n                      >\n                        {statusUpdating ? '...' : t('accept_offer')}\n                      </button>\n                    )}\n                    {showTransferredBtn && (\n                      <button\n                        onClick={handleTransferred}\n                        disabled={statusUpdating}\n                        className=\"flex-1 min-w-fit px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all\"\n                      >\n                        {statusUpdating ? '...' : t('mark_transferred')}\n                      </button>\n                    )}\n                    {showMarkCompletedBtn && (\n                      <button\n                        onClick={handleMarkCompleted}\n                        disabled={statusUpdating}\n                        className=\"flex-1 min-w-fit px-4 py-3 rounded-xl bg-purple-600 text-white font-semibold text-sm hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all\"\n                      >\n                        {statusUpdating ? '...' : t('mark_completed')}\n                      </button>\n                    )}\n                    {!showAcceptBtn && !showTransferredBtn && !showMarkCompletedBtn && convoStatus !== 'completed' && convoStatus !== 'cancelled' && (\n                      <button\n                        onClick={() => setShowOffer(true)}\n                        className=\"flex-1 min-w-fit px-4 py-3 rounded-xl bg-[#FF5722] text-white font-semibold text-sm hover:bg-[#e64a19] transition-all\"\n                      >\n                        {t('make_offer')}\n                      </button>\n                    )}\n                  </div>\n\n                  {/* Message input */}\n                  <div className=\"border-t border-gray-100 px-6 py-4 flex gap-2\">\n                    <input\n                      type=\"text\"\n                      value={newMessage}\n                      onChange={(e) => setNewMessage(e.target.value)}\n                      onKeyDown={handleKeyDown}\n                      placeholder={t('type_message')}\n                      className=\"flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722]/30 focus:border-[#FF5722]\"\n                    />\n                    <button\n                      onClick={() => sendMessage(newMessage)}\n                      disabled={!newMessage.trim()}\n                      className=\"px-6 py-3 rounded-xl bg-[#FF5722] text-white font-semibold text-sm hover:bg-[#e64a19] disabled:opacity-40 disabled:cursor-not-allowed transition-all\"\n                    >\n                      {t('send')}\n                    </button>\n                  </div>\n                </>\n              )}\n            </div>\n          </div>\n        </div>\n      </div>\n    </>\n  )\n}\n
+                })}
+              </div>
+            </div>
+
+            {/* Chat area */}
+            <div className="flex-1 flex flex-col min-h-0">
+              {!activeConversation ? (
+                <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+                  {t('select_conversation')}
+                </div>
+              ) : (
+                <>
+                  {/* Status banner */}
+                  <StatusBanner status={convoStatus} agreedPrice={agreedPrice} currency={offerCurrency} />
+
+                  {/* Messages */}
+                  <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+                    {messages.map((msg: any) => {
+                      const isOwn = msg.sender_id === user?.id
+                      return (
+                        <div key={msg.id} className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>
+                          <div className="w-8 h-8 rounded-full bg-gray-200 shrink-0 overflow-hidden flex items-center justify-center">
+                            {msg.sender?.avatar_url ? (
+                              <img src={msg.sender.avatar_url} alt={msg.sender.username} width={32} height={32} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-xs text-gray-500">{msg.sender?.username?.[0]?.toUpperCase()}</span>
+                            )}
+                          </div>
+                          <div className={`flex flex-col gap-1 max-w-xs ${isOwn ? 'items-end' : ''}`}>
+                            <p className="text-xs text-gray-500">{msg.sender?.username}</p>
+                            <div className={`rounded-lg px-4 py-3 text-sm break-words ${
+                              isOwn ? 'bg-[#FF5722] text-white' : 'bg-gray-100 text-gray-900'
+                            }`}>
+                              {msg.content}
+                            </div>
+                            <p className="text-xs text-gray-400">
+                              {new Date(msg.created_at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    })}
+                    <div ref={messagesEndRef} />
+                  </div>
+
+                  {/* Bank details card */}
+                  {showBankDetails && sellerProfile && (
+                    <BankDetailsCard seller={sellerProfile} agreedPrice={agreedPrice} currency={offerCurrency} />
+                  )}
+
+                  {/* Action buttons */}
+                  <div className="border-t border-gray-100 px-6 py-4 flex gap-2 flex-wrap">
+                    {showAcceptBtn && (
+                      <button
+                        onClick={handleAcceptOffer}
+                        disabled={statusUpdating}
+                        className="flex-1 min-w-fit px-4 py-3 rounded-xl bg-green-600 text-white font-semibold text-sm hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      >
+                        {statusUpdating ? '...' : t('accept_offer')}
+                      </button>
+                    )}
+                    {showTransferredBtn && (
+                      <button
+                        onClick={handleTransferred}
+                        disabled={statusUpdating}
+                        className="flex-1 min-w-fit px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      >
+                        {statusUpdating ? '...' : t('mark_transferred')}
+                      </button>
+                    )}
+                    {showMarkCompletedBtn && (
+                      <button
+                        onClick={handleMarkCompleted}
+                        disabled={statusUpdating}
+                        className="flex-1 min-w-fit px-4 py-3 rounded-xl bg-purple-600 text-white font-semibold text-sm hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      >
+                        {statusUpdating ? '...' : t('mark_completed')}
+                      </button>
+                    )}
+                    {!showAcceptBtn && !showTransferredBtn && !showMarkCompletedBtn && convoStatus !== 'completed' && convoStatus !== 'cancelled' && (
+                      <button
+                        onClick={() => setShowOffer(true)}
+                        className="flex-1 min-w-fit px-4 py-3 rounded-xl bg-[#FF5722] text-white font-semibold text-sm hover:bg-[#e64a19] transition-all"
+                      >
+                        {t('make_offer')}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Message input */}
+                  <div className="border-t border-gray-100 px-6 py-4 flex gap-2">
+                    <input
+                      type="text"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder={t('type_message')}
+                      className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722]/30 focus:border-[#FF5722]"
+                    />
+                    <button
+                      onClick={() => sendMessage(newMessage)}
+                      disabled={!newMessage.trim()}
+                      className="px-6 py-3 rounded-xl bg-[#FF5722] text-white font-semibold text-sm hover:bg-[#e64a19] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    >
+                      {t('send')}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}

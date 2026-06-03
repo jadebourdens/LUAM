@@ -74,6 +74,7 @@
     "enter_offer": "Enter your offer in",
     "no_img": "No img",
     "save": "save",
+    "send": "Send",
     "mark_completed_prompt": "Verified payment received?",
     "mark_completed_button": "✅ Mark as Completed"
   },
