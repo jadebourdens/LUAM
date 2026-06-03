@@ -16,6 +16,7 @@ export default async function Home({
     maxPrice?: string
     size?: string
     condition?: string
+    color?: string
     page?: string
   }>
 }) {
@@ -31,6 +32,7 @@ export default async function Home({
   const maxPrice = sp.maxPrice ? Math.max(0, Number(sp.maxPrice)) : null
   const size = (sp.size || '').trim()
   const condition = (sp.condition || '').trim()
+  const color = (sp.color || '').trim()
   const page = Math.max(1, Number(sp.page || '1') || 1)
   const pageSize = 24
 
@@ -59,6 +61,7 @@ export default async function Home({
   if (q) countQuery = countQuery.or(`title.ilike.%${q}%,description.ilike.%${q}%`)
   if (size) countQuery = countQuery.ilike('size', `%${size}%`)
   if (condition) countQuery = countQuery.eq('condition', condition)
+  if (color) countQuery = countQuery.ilike('color', `%${color}%`)
   if (categoryIds.length > 0) countQuery = countQuery.in('category_id', categoryIds)
   if (minPrice !== null && !Number.isNaN(minPrice)) {
     countQuery = countQuery.or(
@@ -91,6 +94,7 @@ export default async function Home({
   if (q) query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`)
   if (size) query = query.ilike('size', `%${size}%`)
   if (condition) query = query.eq('condition', condition)
+  if (color) query = query.ilike('color', `%${color}%`)
   if (categoryIds.length > 0) query = query.in('category_id', categoryIds)
   if (minPrice !== null && !Number.isNaN(minPrice)) {
     query = query.or(
@@ -110,7 +114,7 @@ export default async function Home({
   const pagedListings = listings ?? []
 
   const buildHref = (p: number) =>
-    `/${locale}?q=${encodeURIComponent(q)}&category=${encodeURIComponent(selectedCategory)}&minPrice=${encodeURIComponent(sp.minPrice || '')}&maxPrice=${encodeURIComponent(sp.maxPrice || '')}&size=${encodeURIComponent(size)}&condition=${encodeURIComponent(condition)}&page=${p}`
+    `/${locale}?q=${encodeURIComponent(q)}&category=${encodeURIComponent(selectedCategory)}&minPrice=${encodeURIComponent(sp.minPrice || '')}&maxPrice=${encodeURIComponent(sp.maxPrice || '')}&size=${encodeURIComponent(size)}&condition=${encodeURIComponent(condition)}&color=${encodeURIComponent(color)}&page=${p}`
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -132,9 +136,6 @@ export default async function Home({
                 : listing.currency === 'USD'
                 ? `$${listing.price_usd}`
                 : `${listing.price_vnd?.toLocaleString()} ₫`
-              const brandAndTitle = listing.brand 
-                ? `${listing.brand} ${listing.title}`
-                : listing.title
               const description = listing.description || ''
               return (
                 <div key={listing.id} className="bg-white border border-stone-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group">
@@ -160,7 +161,12 @@ export default async function Home({
                       <FavoriteHeart listingId={listing.id} isAuthenticated={!!user} />
                     </div>
                     <div className="p-2.5">
-                      <p className="text-xs font-medium text-stone-700 truncate">{brandAndTitle}</p>
+                      <div className="flex gap-1.5 items-baseline">
+                        {listing.brand && (
+                          <span className="text-xs font-bold text-stone-900 truncate">{listing.brand}</span>
+                        )}
+                        <p className="text-xs font-medium text-stone-600 truncate flex-1">{listing.title}</p>
+                      </div>
                       {description && <p className="text-xs text-stone-500 truncate mt-1">{description}</p>}
                     </div>
                   </Link>

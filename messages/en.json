@@ -33,6 +33,7 @@
     "min": "Min",
     "max": "Max",
     "size": "Size",
+    "color": "Color",
     "any_condition": "Any condition",
     "new": "New",
     "like_new": "Like new",

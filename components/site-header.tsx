@@ -590,6 +590,7 @@ function SiteHeaderInner() {
               <input name="minPrice" type="number" min="0" placeholder={tHome('min') || 'Min'} className="w-24 px-3 py-1.5 text-sm rounded-lg border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]" />
               <input name="maxPrice" type="number" min="0" placeholder={tHome('max') || 'Max'} className="w-24 px-3 py-1.5 text-sm rounded-lg border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]" />
               <input name="size" type="text" placeholder={tHome('size') || 'Size'} className="w-20 px-3 py-1.5 text-sm rounded-lg border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]" />
+              <input name="color" type="text" placeholder={tHome('color') || 'Color'} className="w-24 px-3 py-1.5 text-sm rounded-lg border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]" />
               <select name="condition" className="px-3 py-1.5 text-sm rounded-lg border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]">
                 <option value="">{tHome('any_condition') || 'Any Condition'}</option>
                 <option value="new">{tHome('new') || 'New'}</option>
