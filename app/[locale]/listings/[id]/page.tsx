@@ -134,6 +134,7 @@ export default function ListingDetailPage() {
 
   const conditionLabels: Record<string, string> = { new: 'New with tags', like_new: 'Like new', good: 'Good', fair: 'Fair', worn: 'Worn' }
   const isSeller = user && listing.seller_id === user.id
+  const isSold = listing.status === 'sold'
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -143,11 +144,16 @@ export default function ListingDetailPage() {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="space-y-4">
-            {/* Start of replacement */}
+            {/* Images */}
             <div className="space-y-4">
               {sortedImages.length > 0 ? (
                 sortedImages.map((img: any, index: number) => (
                   <div key={index} className="relative aspect-square w-full bg-gray-200 rounded-lg overflow-hidden">
+                    {isSold && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+                        <span className="text-white text-3xl font-bold">SOLD</span>
+                      </div>
+                    )}
                     <Image 
                       src={img.image_url} 
                       alt={`${listing.title} - Image ${index + 1}`} 
@@ -164,12 +170,16 @@ export default function ListingDetailPage() {
                 </div>
               )}
             </div>
-            {/* End of replacement */}
           </div>
           <div className="space-y-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{listing.title}</h1>
               <p className="text-2xl font-bold text-[#FF5722] mb-4">{formatPrice()}</p>
+              {isSold && (
+                <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm font-medium">
+                  This item has been sold.
+                </div>
+              )}
               <div className="flex items-center gap-3 mb-4">
                 <div className="relative w-12 h-12 shrink-0 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center">
                   {listing.seller?.avatar_url ? <Image src={listing.seller.avatar_url} alt="" width={48} height={48} className="object-cover rounded-full" /> : <span className="text-gray-600">{listing.seller?.full_name?.[0] || 'U'}</span>}
@@ -182,42 +192,17 @@ export default function ListingDetailPage() {
               <div className="space-y-3">
                 {!isSeller && user ? (
                   <>
-                    <Link href={`/${locale}/checkout/${listing.id}`} className="block w-full bg-[#FF5722] text-white py-3 px-4 rounded-lg hover:bg-[#E64A19] font-medium text-center">Buy Now</Link>
-                    <button onClick={handleMessageSeller} className="w-full py-2 px-4 rounded-lg border border-gray-300 text-gray-700 hover:border-gray-400">Message Seller</button>
+                    {!isSold ? (
+                      <>
+                        <Link href={`/${locale}/checkout/${listing.id}`} className="block w-full bg-[#FF5722] text-white py-3 px-4 rounded-lg hover:bg-[#E64A19] font-medium text-center">Buy Now</Link>
+                        <button onClick={handleMessageSeller} className="w-full py-2 px-4 rounded-lg border border-gray-300 text-gray-700 hover:border-gray-400">Message Seller</button>
+                      </>
+                    ) : (
+                      <button disabled className="w-full bg-gray-300 text-gray-500 py-3 px-4 rounded-lg font-medium cursor-not-allowed">Item Sold</button>
+                    )}
                     <button onClick={handleToggleFavorite} disabled={favoriteLoading} className="w-full py-2 px-4 rounded-lg border border-gray-300 text-gray-700 hover:border-gray-400 disabled:opacity-60">
                       {favoriteLoading ? 'Saving...' : isFavorited ? '★ Saved to Favorites' : '☆ Add to Favorites'}
                     </button>
-{/* --- Product Details Section --- */}
-<div className="border-t border-gray-200 mt-8 pt-8">
-  <h2 className="text-xl font-bold text-gray-900 mb-6">Product Details</h2>
-
-  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    {[
-      { label: 'Category', value: listing.category?.name },
-      { label: 'Brand', value: listing.brand },
-      { label: 'Color', value: listing.color },
-      { label: 'Size', value: listing.size },
-      { label: 'Condition', value: listing.condition ? conditionLabels[listing.condition] : null },
-    ]
-      .filter((item) => item.value)
-      .map((item) => (
-        <div key={item.label} className="bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
-          <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">{item.label}</p>
-          <p className="font-semibold text-gray-900 text-sm truncate">{item.value}</p>
-        </div>
-      ))}
-  </div>
-
-  {listing.description && (
-    <div className="mt-6 bg-gray-50 rounded-xl px-5 py-4 border border-gray-100">
-      <h3 className="font-semibold text-gray-900 mb-2 text-sm uppercase tracking-wide">Description</h3>
-      <p className="text-gray-600 leading-relaxed whitespace-pre-line text-sm">
-        {listing.description}
-      </p>
-    </div>
-  )}
-</div>
-                    
                   </>
                 ) : user ? (
                   <div className="space-y-3">
@@ -230,6 +215,37 @@ export default function ListingDetailPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Product Details Section */}
+        <div className="border-t border-gray-200 mt-8 pt-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-6">Product Details</h2>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: 'Category', value: listing.category?.name },
+              { label: 'Brand', value: listing.brand },
+              { label: 'Color', value: listing.color },
+              { label: 'Size', value: listing.size },
+              { label: 'Condition', value: listing.condition ? conditionLabels[listing.condition] : null },
+            ]
+              .filter((item) => item.value)
+              .map((item) => (
+                <div key={item.label} className="bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
+                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">{item.label}</p>
+                  <p className="font-semibold text-gray-900 text-sm truncate">{item.value}</p>
+                </div>
+              ))}
+          </div>
+
+          {listing.description && (
+            <div className="mt-6 bg-gray-50 rounded-xl px-5 py-4 border border-gray-100">
+              <h3 className="font-semibold text-gray-900 mb-2 text-sm uppercase tracking-wide">Description</h3>
+              <p className="text-gray-600 leading-relaxed whitespace-pre-line text-sm">
+                {listing.description}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

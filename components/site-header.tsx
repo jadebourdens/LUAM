@@ -467,7 +467,7 @@ function SiteHeaderInner() {
         .from('chat_messages')
         .select('*', { count: 'exact', head: true })
         .eq('receiver_id', currentUser.id)
-        .eq('read', false)
+        .eq('is_read', false)
 
       setUnreadCount(count || 0)
 
@@ -483,7 +483,7 @@ function SiteHeaderInner() {
             table:  'chat_messages',
           },
           (payload) => {
-            if (payload.new && payload.new.receiver_id === currentUser.id && !payload.new.read) {
+if (payload.new && payload.new.receiver_id === currentUser.id && !payload.new.is_read) {
               setUnreadCount((prev) => prev + 1)
             }
           },

@@ -19,10 +19,13 @@ export default function CheckoutPage() {
     const load = async () => {
       const { data } = await supabase
         .from('listings')
-        .select('id,title,currency,price_eur,price_usd,price_vnd')
+        .select('id,title,currency,price_eur,price_usd,price_vnd,status')
         .eq('id', listingId)
         .single()
       setListing(data)
+      if (data?.status === 'sold') {
+        setError('This item has already been sold.')
+      }
     }
     if (listingId) load()
   }, [listingId])
@@ -72,13 +75,15 @@ export default function CheckoutPage() {
     setLoading(false)
   }
 
+  const isSold = listing?.status === 'sold'
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
       <div className="w-full max-w-lg bg-white rounded-lg shadow p-6">
         <h1 className="text-2xl font-bold mb-2">Final Checkout</h1>
         <p className="text-gray-600 mb-6">Review your payment details before paying with Stripe.</p>
 
-        {error && <p className="text-red-600 mb-4">{error}</p>}
+        {error && <p className="text-red-600 mb-4 bg-red-50 border border-red-200 p-3 rounded">{error}</p>}
 
         {listing && (
           <div className="border rounded-lg p-4 mb-6 space-y-2 text-sm">
@@ -88,25 +93,30 @@ export default function CheckoutPage() {
           </div>
         )}
 
-        <div className="mb-4 bg-stone-50 border border-stone-200 rounded-xl p-4">
-          <p className="text-sm font-medium mb-1">💳 Payment method</p>
-          <p className="text-xs text-gray-500 mb-3">Bank transfer is the most trusted payment method in Vietnam</p>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input type="radio" name="paymentMethod" checked={true} readOnly />
-            <div>
-              <p className="text-sm font-medium">🏦 Bank Transfer (VND)</p>
-              <p className="text-xs text-gray-400">Transfer directly to seller's bank account</p>
-            </div>
-          </label>
-        </div>
+        {!isSold && (
+          <div className="mb-4 bg-stone-50 border border-stone-200 rounded-xl p-4">
+            <p className="text-sm font-medium mb-1">💳 Payment method</p>
+            <p className="text-xs text-gray-500 mb-3">Bank transfer is the most trusted payment method in Vietnam</p>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input type="radio" name="paymentMethod" checked={true} readOnly />
+              <div>
+                <p className="text-sm font-medium">🏦 Bank Transfer (VND)</p>
+                <p className="text-xs text-gray-400">Transfer directly to seller's bank account</p>
+              </div>
+            </label>
+          </div>
+        )}
 
-        {/* Clickable button added here */}
         <button 
           onClick={handleBuyNow} 
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition"
+          disabled={loading || isSold}
+          className={`w-full py-3 rounded-lg font-medium transition ${
+            isSold 
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
         >
-          {loading ? 'Processing…' : '🏦 Continue to Transfer Instructions'}
+          {isSold ? 'Item Sold' : loading ? 'Processing…' : '🏦 Continue to Transfer Instructions'}
         </button>
 
         <button onClick={() => router.back()} className="w-full mt-3 border border-gray-300 py-3 rounded-lg text-gray-700">Back</button>

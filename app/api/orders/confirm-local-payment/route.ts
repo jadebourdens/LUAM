@@ -29,7 +29,13 @@ export async function POST(req: Request) {
 
     if (updateOrderError) throw updateOrderError
 
-    // 3. Sync the checkouts table
+    // 3. Mark listing as sold
+    await supabase
+      .from('listings')
+      .update({ status: 'sold' })
+      .eq('id', order.listing_id)
+
+    // 4. Sync the checkouts table
     await supabase
       .from('checkouts')
       .update({ status: 'paid_verified' })

@@ -55,6 +55,7 @@ export default function SellForm({ locale, onSuccess, defaultCategorySlug }: Pro
   const [brandInput, setBrandInput] = useState('')
   const [showBrandSuggestions, setShowBrandSuggestions] = useState(false)
   const [selectedBrand, setSelectedBrand] = useState('')
+  const brandBlurTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [form, setForm] = useState({
     title: '',
@@ -80,7 +81,7 @@ export default function SellForm({ locale, onSuccess, defaultCategorySlug }: Pro
 
   useEffect(() => {
     const supabase = createClient()
-    
+
     // Fetch categories
     supabase.from('categories').select('id, name, slug').is('parent_id', null).order('name').then(({ data }) => {
       if (data) {
@@ -92,7 +93,7 @@ export default function SellForm({ locale, onSuccess, defaultCategorySlug }: Pro
       }
     })
 
-    // Fetch brands from DB
+    // Fetch brands from DB sorted by popularity
     supabase.from('brands').select('name').order('usage_count', { ascending: false }).then(({ data }) => {
       if (data) {
         setBrands(data.map((b) => b.name))
@@ -137,17 +138,56 @@ export default function SellForm({ locale, onSuccess, defaultCategorySlug }: Pro
     setSelectedBrand(brand)
     setBrandInput(brand)
     setShowBrandSuggestions(false)
+    if (brandBlurTimer.current) clearTimeout(brandBlurTimer.current)
   }
 
   const handleBrandInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setBrandInput(e.target.value)
+    const val = e.target.value
+    setBrandInput(val)
     setShowBrandSuggestions(true)
-    if (!e.target.value) setSelectedBrand('')
+    if (!val) setSelectedBrand('')
+  }
+
+  const handleBrandFocus = () => {
+    if (brandBlurTimer.current) clearTimeout(brandBlurTimer.current)
+    setShowBrandSuggestions(true)
+  }
+
+  const handleBrandBlur = () => {
+    brandBlurTimer.current = setTimeout(() => setShowBrandSuggestions(false), 200)
   }
 
   const filteredBrands = brandInput
     ? brands.filter((b) => b.toLowerCase().includes(brandInput.toLowerCase()))
-    : brands.slice(0, 8)
+    : brands.slice(0, 10)
+
+  // ─────────────────────────────────────────────
+  // Brand save/update helper
+  // ─────────────────────────────────────────────
+  const saveBrand = async (supabase: ReturnType<typeof createClient>, brandName: string) => {
+    const isExisting = brands.includes(brandName)
+
+    if (isExisting) {
+      // Brand already exists → increment usage_count
+      const { error: updateError } = await supabase.rpc('increment_brand_usage', { brand_name: brandName })
+      if (updateError) {
+        // Fallback: direct update if RPC not available
+        await supabase
+          .from('brands')
+          .update({ usage_count: supabase.rpc('increment_brand_usage', { brand_name: brandName }) })
+          .eq('name', brandName)
+        console.warn('Brand usage_count update warning:', updateError)
+      }
+    } else {
+      // New brand → insert (ignore conflict as safety net)
+      const { error: insertError } = await supabase
+        .from('brands')
+        .insert({ name: brandName, usage_count: 1 })
+      if (insertError && insertError.code !== '23505') {
+        console.warn('Brand insert warning:', insertError)
+      }
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -162,13 +202,9 @@ export default function SellForm({ locale, onSuccess, defaultCategorySlug }: Pro
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setError('You must be logged in.'); setSubmitting(false); return }
 
-    // Auto-save new brand if it's not in DB yet
-    if (selectedBrand && !brands.includes(selectedBrand)) {
-      const { error: brandError } = await supabase.from('brands').insert({ name: selectedBrand, usage_count: 1 })
-      // Ignore conflict if brand already exists (race condition)
-      if (brandError && brandError.code !== '23505') {
-        console.warn('Brand insert warning:', brandError)
-      }
+    // Save or update brand
+    if (selectedBrand) {
+      await saveBrand(supabase, selectedBrand)
     }
 
     const priceNum = parseFloat(form.price)
@@ -307,7 +343,8 @@ export default function SellForm({ locale, onSuccess, defaultCategorySlug }: Pro
               type="text"
               value={brandInput}
               onChange={handleBrandInputChange}
-              onFocus={() => setShowBrandSuggestions(true)}
+              onFocus={handleBrandFocus}
+              onBlur={handleBrandBlur}
               placeholder="Type brand name..."
               className="w-full border border-stone-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722]/20 focus:border-[#FF5722]"
             />
@@ -317,7 +354,7 @@ export default function SellForm({ locale, onSuccess, defaultCategorySlug }: Pro
                   <button
                     key={brand}
                     type="button"
-                    onClick={() => handleBrandSelect(brand)}
+                    onMouseDown={() => handleBrandSelect(brand)}
                     className="w-full text-left px-3 py-2 text-sm hover:bg-stone-50 border-b border-stone-100 last:border-b-0"
                   >
                     {brand}

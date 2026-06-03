@@ -183,7 +183,6 @@ export default function MessagesPage() {
   const [showOffer, setShowOffer] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<{ id: string; title: string } | null>(null)
   const [statusUpdating, setStatusUpdating] = useState(false)
-  // Latest offer amount parsed from messages (used for seller to accept)
   const [pendingOfferAmount, setPendingOfferAmount] = useState<number | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -198,7 +197,6 @@ export default function MessagesPage() {
     if (!messages.length) { setPendingOfferAmount(null); return }
     for (let i = messages.length - 1; i >= 0; i--) {
       const m = messages[i]
-      // offer messages look like "💸 Offer: ₫1,000,000" or "$95.00"
       const match = m.content?.match(/💸 Offer: [₫$€]?([\d,\.]+)/)
       if (match) {
         const raw = match[1].replace(/,/g, '')
@@ -231,10 +229,10 @@ export default function MessagesPage() {
     if (!user) return
     await supabase
       .from('chat_messages')
-      .update({ read: true })
+      .update({ is_read: true })
       .eq('conversation_id', convoId)
       .eq('receiver_id', user.id)
-      .eq('read', false)
+      .eq('is_read', false)
   }, [supabase, user])
 
   const sendMessage = useCallback(async (content: string) => {
@@ -259,7 +257,6 @@ export default function MessagesPage() {
     }
   }, [activeConversation, user, supabase, loadMessages])
 
-  // Core status update function
   const updateStatus = useCallback(async (newStatus: ConvoStatus, agreedPrice?: number) => {
     if (!activeConversation) return
     setStatusUpdating(true)
@@ -277,7 +274,6 @@ export default function MessagesPage() {
       return
     }
 
-    // Reflect locally immediately
     setActiveConversation((prev: any) => ({ ...prev, status: newStatus, agreed_price: agreedPrice ?? prev.agreed_price }))
     setConversations((prev: any[]) =>
       prev.map((c) => c.id === activeConversation.id ? { ...c, status: newStatus, agreed_price: agreedPrice ?? c.agreed_price } : c)
@@ -296,7 +292,6 @@ export default function MessagesPage() {
   const handleAcceptOffer = useCallback(async () => {
     if (pendingOfferAmount === null) return
     await updateStatus('accepted', pendingOfferAmount)
-    // Notify in chat
     const currency: Currency = activeConversation?.listing?.currency ?? 'USD'
     sendMessage(`✅ Offer accepted at ${fmtMoney(pendingOfferAmount, currency)}. Please transfer payment to the bank details shown below.`)
   }, [pendingOfferAmount, updateStatus, activeConversation, sendMessage])
@@ -372,13 +367,9 @@ export default function MessagesPage() {
   const agreedPrice: number = activeConversation?.agreed_price ?? 0
   const sellerProfile = activeConversation?.seller
 
-  // Seller sees "Accept Offer" when open and a pending offer exists
   const showAcceptBtn = isSeller && convoStatus === 'open' && pendingOfferAmount !== null
-  // Buyer sees "I have transferred" when status = accepted
   const showTransferredBtn = isBuyer && convoStatus === 'accepted'
-  // Seller sees "Mark as Completed" when status = waiting_for_verification
   const showMarkCompletedBtn = isSeller && convoStatus === 'waiting_for_verification'
-  // Show bank details to buyer when accepted or waiting
   const showBankDetails = isBuyer && (convoStatus === 'accepted' || convoStatus === 'waiting_for_verification')
 
   return (
@@ -456,105 +447,4 @@ export default function MessagesPage() {
                       </button>
                     </div>
                   )
-                })}
-              </div>
-            </div>
-
-            {/* Chat panel */}
-            <div className="flex-1 flex flex-col min-w-0 bg-white">
-              {activeConversation ? (
-                <>
-                  {/* Chat header */}
-                  <div className="px-6 py-3 border-b border-gray-100 bg-white font-semibold text-sm flex items-center gap-3">
-                    {listing?.listing_images?.[0]?.image_url && (
-                      <img src={listing.listing_images[0].image_url} alt={listing.title} className="w-9 h-9 rounded-lg object-cover border border-gray-100 shrink-0" />
-                    )}
-                    <span className="flex-1 truncate">{listing?.title ?? 'Conversation'}</span>
-                  </div>
-
-                  {/* Status banner */}
-                  <StatusBanner status={convoStatus} agreedPrice={agreedPrice} currency={offerCurrency} />
-
-                  {/* Seller: Accept Offer bar */}
-                  {showAcceptBtn && (
-                    <div className="px-6 py-3 bg-amber-50 border-b border-amber-200 flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-amber-800">Buyer offered {fmtMoney(pendingOfferAmount!, offerCurrency)}</p>
-                        <p className="text-xs text-amber-600">Accept to share your bank details and proceed with transfer</p>
-                      </div>
-                      <button
-                        onClick={handleAcceptOffer}
-                        disabled={statusUpdating}
-                        className="shrink-0 px-4 py-2 rounded-xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
-                      >
-                        {statusUpdating ? '...' : '✅ Accept Offer'}
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Messages */}
-                  <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3 bg-gray-50">
-                    {messages.map((m: any, i: number) => (
-                      <div key={i} className={`flex ${m.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`px-4 py-2.5 rounded-2xl text-sm max-w-[70%] break-words ${m.sender_id === user?.id ? 'bg-[#FF5722] text-white' : 'bg-white border border-gray-200'}`}>
-                          {m.content}
-                        </div>
-                      </div>
-                    ))}
-                    <div ref={messagesEndRef} />
-                  </div>
-
-                  {/* Bank details card (buyer view, after accepted) */}
-                  {showBankDetails && (
-                    <BankDetailsCard seller={sellerProfile} agreedPrice={agreedPrice} currency={offerCurrency} />
-                  )}
-
-                  {/* Buyer: I have transferred button */}
-                  {showTransferredBtn && (
-                    <div className="px-6 py-3 bg-blue-50 border-t border-blue-200 flex items-center justify-between gap-3">
-                      <p className="text-sm text-blue-800">Transfer complete? Let the seller know.</p>
-                      <button
-                        onClick={handleTransferred}
-                        disabled={statusUpdating}
-                        className="shrink-0 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                      >
-                        {statusUpdating ? '...' : '💳 I have transferred the money'}
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Seller: Mark as Completed button */}
-                  {showMarkCompletedBtn && (
-                    <div className="px-6 py-3 bg-purple-50 border-t border-purple-200 flex items-center justify-between gap-3">
-                      <p className="text-sm text-purple-800">{t('mark_completed_prompt')}</p>
-                      <button
-                        onClick={handleMarkCompleted}
-                        disabled={statusUpdating}
-                        className="shrink-0 px-4 py-2 rounded-xl bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 disabled:opacity-50 transition-colors"
-                      >
-                        {statusUpdating ? '...' : t('mark_completed_button')}
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Input bar */}
-                  <div className="p-4 border-t border-gray-100 bg-white flex items-center gap-2">
-                    <button onClick={() => setShowOffer(true)} className="shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-amber-50 hover:bg-amber-100 text-lg border border-amber-200 transition-colors" title={t('make_offer')}>💸</button>
-                    <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={handleKeyDown} placeholder={t('type_message')} className="flex-1 border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722]/30 focus:border-[#FF5722]" />
-                    <button onClick={() => sendMessage(newMessage)} disabled={!newMessage.trim()} className="shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-[#FF5722] hover:bg-[#e64a19] text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                        <path d="M3.478 2.405a.75.75 0 0 0-.926.94l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.405Z" />
-                      </svg>
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">{t('select_conversation')}</div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  )
-}
+                })}\n              </div>\n            </div>\n\n            {/* Chat area */}\n            <div className=\"flex-1 flex flex-col min-h-0\">\n              {!activeConversation ? (\n                <div className=\"flex items-center justify-center h-full text-gray-400 text-sm\">\n                  {t('select_conversation')}\n                </div>\n              ) : (\n                <>\n                  {/* Status banner */}\n                  <StatusBanner status={convoStatus} agreedPrice={agreedPrice} currency={offerCurrency} />\n\n                  {/* Messages */}\n                  <div className=\"flex-1 overflow-y-auto px-6 py-4 space-y-4\">\n                    {messages.map((msg: any) => {\n                      const isOwn = msg.sender_id === user?.id\n                      return (\n                        <div key={msg.id} className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>\n                          <div className=\"w-8 h-8 rounded-full bg-gray-200 shrink-0 overflow-hidden flex items-center justify-center\">\n                            {msg.sender?.avatar_url ? (\n                              <img src={msg.sender.avatar_url} alt={msg.sender.username} className=\"w-full h-full object-cover\" />\n                            ) : (\n                              <span className=\"text-xs text-gray-500\">{msg.sender?.username?.[0]?.toUpperCase()}</span>\n                            )}\n                          </div>\n                          <div className={`flex flex-col gap-1 max-w-xs ${isOwn ? 'items-end' : ''}`}>\n                            <p className=\"text-xs text-gray-500\">{msg.sender?.username}</p>\n                            <div className={`rounded-lg px-4 py-3 text-sm break-words ${\n                              isOwn\n                                ? 'bg-[#FF5722] text-white'\n                                : 'bg-gray-100 text-gray-900'\n                            }`}>\n                              {msg.content}\n                            </div>\n                            <p className=\"text-xs text-gray-400\">\n                              {new Date(msg.created_at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}\n                            </p>\n                          </div>\n                        </div>\n                      )\n                    })}\n                    <div ref={messagesEndRef} />\n                  </div>\n\n                  {/* Bank details card */}\n                  {showBankDetails && sellerProfile && (\n                    <BankDetailsCard seller={sellerProfile} agreedPrice={agreedPrice} currency={offerCurrency} />\n                  )}\n\n                  {/* Action buttons */}\n                  <div className=\"border-t border-gray-100 px-6 py-4 flex gap-2 flex-wrap\">\n                    {showAcceptBtn && (\n                      <button\n                        onClick={handleAcceptOffer}\n                        disabled={statusUpdating}\n                        className=\"flex-1 min-w-fit px-4 py-3 rounded-xl bg-green-600 text-white font-semibold text-sm hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all\"\n                      >\n                        {statusUpdating ? '...' : t('accept_offer')}\n                      </button>\n                    )}\n                    {showTransferredBtn && (\n                      <button\n                        onClick={handleTransferred}\n                        disabled={statusUpdating}\n                        className=\"flex-1 min-w-fit px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all\"\n                      >\n                        {statusUpdating ? '...' : t('mark_transferred')}\n                      </button>\n                    )}\n                    {showMarkCompletedBtn && (\n                      <button\n                        onClick={handleMarkCompleted}\n                        disabled={statusUpdating}\n                        className=\"flex-1 min-w-fit px-4 py-3 rounded-xl bg-purple-600 text-white font-semibold text-sm hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all\"\n                      >\n                        {statusUpdating ? '...' : t('mark_completed')}\n                      </button>\n                    )}\n                    {!showAcceptBtn && !showTransferredBtn && !showMarkCompletedBtn && convoStatus !== 'completed' && convoStatus !== 'cancelled' && (\n                      <button\n                        onClick={() => setShowOffer(true)}\n                        className=\"flex-1 min-w-fit px-4 py-3 rounded-xl bg-[#FF5722] text-white font-semibold text-sm hover:bg-[#e64a19] transition-all\"\n                      >\n                        {t('make_offer')}\n                      </button>\n                    )}\n                  </div>\n\n                  {/* Message input */}\n                  <div className=\"border-t border-gray-100 px-6 py-4 flex gap-2\">\n                    <input\n                      type=\"text\"\n                      value={newMessage}\n                      onChange={(e) => setNewMessage(e.target.value)}\n                      onKeyDown={handleKeyDown}\n                      placeholder={t('type_message')}\n                      className=\"flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722]/30 focus:border-[#FF5722]\"\n                    />\n                    <button\n                      onClick={() => sendMessage(newMessage)}\n                      disabled={!newMessage.trim()}\n                      className=\"px-6 py-3 rounded-xl bg-[#FF5722] text-white font-semibold text-sm hover:bg-[#e64a19] disabled:opacity-40 disabled:cursor-not-allowed transition-all\"\n                    >\n                      {t('send')}\n                    </button>\n                  </div>\n                </>\n              )}\n            </div>\n          </div>\n        </div>\n      </div>\n    </>\n  )\n}\n

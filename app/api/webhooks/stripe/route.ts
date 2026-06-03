@@ -22,6 +22,18 @@ export async function POST(req: Request) {
     const paymentIntent = event.data.object as any
     const supabase = await createClient()
 
+    // Get order + listing_id
+    const { data: order } = await supabase
+      .from('orders')
+      .select('id, listing_id')
+      .eq('id', paymentIntent.metadata.order_id)
+      .single()
+
+    if (!order) {
+      return new Response('Order not found', { status: 404 })
+    }
+
+    // Update order status
     const { error } = await supabase
       .from('orders')
       .update({
@@ -34,6 +46,12 @@ export async function POST(req: Request) {
       console.error('Database update error:', error)
       return new Response('Internal Server Error', { status: 500 })
     }
+
+    // Mark listing as sold
+    await supabase
+      .from('listings')
+      .update({ status: 'sold' })
+      .eq('id', order.listing_id)
   }
 
   return new Response(JSON.stringify({ received: true }), { status: 200 })
