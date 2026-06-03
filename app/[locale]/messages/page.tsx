@@ -306,6 +306,11 @@ export default function MessagesPage() {
     sendMessage('💳 I have transferred the money. Please check and confirm.')
   }, [updateStatus, sendMessage])
 
+  const handleMarkCompleted = useCallback(async () => {
+    await updateStatus('completed')
+    sendMessage('✅ Payment confirmed. Transaction complete!')
+  }, [updateStatus, sendMessage])
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
@@ -371,6 +376,8 @@ export default function MessagesPage() {
   const showAcceptBtn = isSeller && convoStatus === 'open' && pendingOfferAmount !== null
   // Buyer sees "I have transferred" when status = accepted
   const showTransferredBtn = isBuyer && convoStatus === 'accepted'
+  // Seller sees "Mark as Completed" when status = waiting_for_verification
+  const showMarkCompletedBtn = isSeller && convoStatus === 'waiting_for_verification'
   // Show bank details to buyer when accepted or waiting
   const showBankDetails = isBuyer && (convoStatus === 'accepted' || convoStatus === 'waiting_for_verification')
 
@@ -512,6 +519,20 @@ export default function MessagesPage() {
                         className="shrink-0 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
                       >
                         {statusUpdating ? '...' : '💳 I have transferred the money'}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Seller: Mark as Completed button */}
+                  {showMarkCompletedBtn && (
+                    <div className="px-6 py-3 bg-purple-50 border-t border-purple-200 flex items-center justify-between gap-3">
+                      <p className="text-sm text-purple-800">Verified payment received?</p>
+                      <button
+                        onClick={handleMarkCompleted}
+                        disabled={statusUpdating}
+                        className="shrink-0 px-4 py-2 rounded-xl bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                      >
+                        {statusUpdating ? '...' : '✅ Mark as Completed'}
                       </button>
                     </div>
                   )}
