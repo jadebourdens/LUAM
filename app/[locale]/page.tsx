@@ -159,13 +159,13 @@ export default async function Home({
               return (
                 <div key={listing.id} className="bg-white border border-stone-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group">
                   <Link href={`/${locale}/listings/${listing.id}`} className="block relative">
-                    <div style={{ position: 'relative', width: '100%', paddingBottom: '100%' }} className="bg-stone-100 overflow-hidden rounded-t-2xl">
+                    <div className="relative w-full aspect-square bg-stone-100 overflow-hidden rounded-t-2xl">
                       {firstImage ? (
                         <Image
                           src={firstImage}
                           alt={listing.title}
                           fill
-                          priority={i === 0}
+                          priority={i === 0 ? true : false}
                           sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
                           className="object-cover group-hover:scale-105 transition-transform duration-300"
                         />

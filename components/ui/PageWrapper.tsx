@@ -10,11 +10,13 @@ export default function PageWrapper({
   children: React.ReactNode 
 }) {
   return (
-    <div className="container mx-auto p-8 max-w-4xl min-h-[60vh]">
-      <h1 className="text-4xl font-bold text-stone-900 mb-8 pb-4 border-b border-stone-200">
-        {title}
-      </h1>
-      <div className="text-stone-600 leading-relaxed space-y-4">
+    <div className="min-h-[60vh]">
+      <div className="container mx-auto px-8 max-w-4xl pt-6 pb-2">
+        <h1 className="text-4xl font-bold text-stone-900 mb-3 pb-3 border-b border-stone-200">
+          {title}
+        </h1>
+      </div>
+      <div className="text-stone-600 leading-relaxed">
         {children}
       </div>
     </div>

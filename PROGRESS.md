@@ -322,4 +322,44 @@ admin/moderation/page.tsx
 profile/edit/page.tsx
 login/page.tsx (duplicate of auth/login?)
 
-Which one do you want to start with?
+Lời khuyên để làm việc với cấu trúc này:
+Khi cần tìm file Header: Nó chắc chắn nằm trong components/. Nếu bạn có nhiều loại header (như site-header, user-nav, v.v.), hãy kiểm tra kỹ trong thư mục này.
+
+Khi cần cấu hình hệ thống: Hãy nhìn vào next.config.ts, postcss.config.mjs hoặc eslint.config.mjs ở thư mục gốc.
+
+Khi làm việc với Aider: Bạn có thể target trực tiếp vào thư mục:
+
+/add app/ (nếu bạn muốn tôi xem logic điều hướng).
+
+/add components/ (nếu bạn muốn tôi xem logic giao diện).
+
+/add lib/ (nếu bạn muốn tôi kiểm tra lại logic kết nối Supabase/Resend).
+
+
+Fri, 29 may 26
+- Button share on Threads
+
+The In-Chat Nudge: When a buyer and seller agree on a price in chat interface, have a small, system-generated message appear in the chat: "Looks like a match! ✨ Want to tell everyone about your new find on Threads?"
+
+The "Mark as Sold" Workflow: If your platform allows users to mark an item as "Sold," use that as the trigger. After they click "Mark as Sold," show a success screen: "Congrats! You've got a deal. Share the love on Threads?"
+
+2. Focus on "The Hunt," Not Just the Purchase
+In a marketplace, users are often proud of finding a great item or securing a deal. Tailor your copy to reflect that:
+
+For the Buyer: "Just scored this on [YourSiteName]! 🏹 #FoundIt"
+
+For the Seller: "Just sold this! Finding a new home for this piece. ♻️ #ShopSmall"
+
+
+- this is optional, When buyer click on seller profile, I want there is a small place they can read the page "About me" small nothing too complicated they can talk about their process, their workspace, or their biggest creative challenge.
+- Help Me Choose
+
+01 June 
+Bây giờ ae vibe BE cũng hạn chế Vercel rồi, giao diện thân thiện nhất thì có Render, còn muốn gộp cả db như một hệ sinh thái docker thì lấy Railway (cho free 7-14 ngày, clone cực nhanh)
+
+
+Implementing the "Filters" toggle button to hide those extra fields until they are needed?
+
+Updating the CSS to clearly distinguish the Global Search from the local Filter bar?
+
+Creating a cleaner Home Page layout by moving the advanced filters exclusively to your search results page?

@@ -7,6 +7,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import DeleteListingButton from '@/components/delete-listing-button'
 import { useTranslations } from 'next-intl'
+import SellForm from '@/components/sell-form'
 
 export default function ListingDetailPage() {
   const t = useTranslations('Listing')
@@ -24,8 +25,10 @@ export default function ListingDetailPage() {
   const [safetyLoading, setSafetyLoading] = useState(false)
   const [safetyNotice, setSafetyNotice] = useState<string | null>(null)
 
+  const isNewListing = !id || id === 'new'
+
   useEffect(() => {
-    if (!id) return
+    if (isNewListing) return
 
     const fetchListing = async () => {
       const supabase = createClient()
@@ -59,7 +62,7 @@ export default function ListingDetailPage() {
     }
 
     fetchListing()
-  }, [id])
+  }, [id, isNewListing])
 
   const handleMessageSeller = async () => {
     if (!listing?.id) return
@@ -117,6 +120,19 @@ export default function ListingDetailPage() {
     setSafetyLoading(false)
   }
 
+  // ── New listing form ──
+  if (isNewListing) {
+    return (
+      <div className="min-h-screen bg-stone-50 py-10">
+        <div className="max-w-2xl mx-auto px-4">
+          <h1 className="text-2xl font-bold text-stone-900 mb-6">Sell an item</h1>
+          <SellForm locale={locale} />
+        </div>
+      </div>
+    )
+  }
+
+  // ── Detail page ──
   if (loading) return <div className="p-12 text-center">{t('loading')}</div>
   if (error || !listing) return <div className="p-12 text-center">{t('not_found')}</div>
 

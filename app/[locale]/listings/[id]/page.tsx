@@ -143,13 +143,28 @@ export default function ListingDetailPage() {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="space-y-4">
-            <div className="relative aspect-square w-full bg-gray-200 rounded-lg overflow-hidden">
+            {/* Start of replacement */}
+            <div className="space-y-4">
               {sortedImages.length > 0 ? (
-                <Image src={sortedImages[0].image_url} alt={listing.title} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" priority />
+                sortedImages.map((img: any, index: number) => (
+                  <div key={index} className="relative aspect-square w-full bg-gray-200 rounded-lg overflow-hidden">
+                    <Image 
+                      src={img.image_url} 
+                      alt={`${listing.title} - Image ${index + 1}`} 
+                      fill 
+                      sizes="(max-width: 1024px) 100vw, 50vw" 
+                      className="object-cover" 
+                      priority={index === 0}
+                    />
+                  </div>
+                ))
               ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-gray-400">No image</div>
+                <div className="relative aspect-square w-full bg-gray-200 rounded-lg flex items-center justify-center text-gray-400">
+                  No image
+                </div>
               )}
             </div>
+            {/* End of replacement */}
           </div>
           <div className="space-y-6">
             <div>
@@ -172,6 +187,37 @@ export default function ListingDetailPage() {
                     <button onClick={handleToggleFavorite} disabled={favoriteLoading} className="w-full py-2 px-4 rounded-lg border border-gray-300 text-gray-700 hover:border-gray-400 disabled:opacity-60">
                       {favoriteLoading ? 'Saving...' : isFavorited ? '★ Saved to Favorites' : '☆ Add to Favorites'}
                     </button>
+{/* --- Product Details Section --- */}
+<div className="border-t border-gray-200 mt-8 pt-8">
+  <h2 className="text-xl font-bold text-gray-900 mb-6">Product Details</h2>
+
+  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    {[
+      { label: 'Category', value: listing.category?.name },
+      { label: 'Brand', value: listing.brand },
+      { label: 'Color', value: listing.color },
+      { label: 'Size', value: listing.size },
+      { label: 'Condition', value: listing.condition ? conditionLabels[listing.condition] : null },
+    ]
+      .filter((item) => item.value)
+      .map((item) => (
+        <div key={item.label} className="bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
+          <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">{item.label}</p>
+          <p className="font-semibold text-gray-900 text-sm truncate">{item.value}</p>
+        </div>
+      ))}
+  </div>
+
+  {listing.description && (
+    <div className="mt-6 bg-gray-50 rounded-xl px-5 py-4 border border-gray-100">
+      <h3 className="font-semibold text-gray-900 mb-2 text-sm uppercase tracking-wide">Description</h3>
+      <p className="text-gray-600 leading-relaxed whitespace-pre-line text-sm">
+        {listing.description}
+      </p>
+    </div>
+  )}
+</div>
+                    
                   </>
                 ) : user ? (
                   <div className="space-y-3">
