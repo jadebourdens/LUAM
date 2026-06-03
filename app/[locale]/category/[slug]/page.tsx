@@ -9,6 +9,7 @@ interface Props {
 interface Listing {
   id: string
   title: string
+  description: string | null
   price_eur: number | null
   price_usd: number | null
   price_vnd: number | null
@@ -57,7 +58,7 @@ export default async function CategoryPage({ params }: Props) {
    const { data: listings } = await supabase
     .from('listings')
     .select(`
-      id, title, price_eur, price_usd, price_vnd, currency, condition, brand, size,
+      id, title, description, price_eur, price_usd, price_vnd, currency, condition, brand, size,
       listing_images (image_url, position)
     `)
     .eq('category_id', category.id)
@@ -95,7 +96,7 @@ export default async function CategoryPage({ params }: Props) {
                 href={`/${locale}/listings/${listing.id}`}
                 className="group block rounded-2xl overflow-hidden border border-stone-100 hover:border-stone-200 hover:shadow-md transition-all bg-white"
               >
-                <div className="aspect-square bg-stone-100 overflow-hidden">
+                <div className="relative aspect-square bg-stone-100 overflow-hidden">
                   {image ? (
                     <img
                       src={image}
@@ -112,20 +113,17 @@ export default async function CategoryPage({ params }: Props) {
                       </svg>
                     </div>
                   )}
+                  <div className="absolute bottom-2 left-2">
+                    <span className="bg-white/90 backdrop-blur-sm text-[#FF5722] text-xs font-bold px-2 py-1 rounded-lg shadow-sm">{formatPrice(listing, locale)}</span>
+                  </div>
                 </div>
                 <div className="p-3">
-                  <p className="text-sm font-medium text-stone-800 truncate">{listing.title}</p>
-                  {listing.brand && (
-                    <p className="text-xs text-stone-400 truncate">{listing.brand}</p>
+                  <p className="text-xs font-medium text-stone-700 truncate">
+                    {listing.brand ? `${listing.brand} ${listing.title}` : listing.title}
+                  </p>
+                  {listing.description && (
+                    <p className="text-xs text-stone-500 truncate mt-1">{listing.description}</p>
                   )}
-                  <div className="flex items-center justify-between mt-1.5">
-                    <p className="text-sm font-bold text-[#FF5722]">{formatPrice(listing, locale)}</p>
-                    {listing.condition && (
-                      <span className="text-[10px] text-stone-400 bg-stone-50 border border-stone-100 px-1.5 py-0.5 rounded-full">
-                        {listing.condition}
-                      </span>
-                    )}
-                  </div>
                 </div>
               </Link>
             )

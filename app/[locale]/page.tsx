@@ -132,8 +132,10 @@ export default async function Home({
                 : listing.currency === 'USD'
                 ? `$${listing.price_usd}`
                 : `${listing.price_vnd?.toLocaleString()} ₫`
-              const secondary = [listing.size, listing.condition].filter(Boolean).join(' · ')
-
+              const brandAndTitle = listing.brand 
+                ? `${listing.brand} ${listing.title}`
+                : listing.title
+              const description = listing.description || ''
               return (
                 <div key={listing.id} className="bg-white border border-stone-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group">
                   <Link href={`/${locale}/listings/${listing.id}`} className="block relative">
@@ -158,8 +160,8 @@ export default async function Home({
                       <FavoriteHeart listingId={listing.id} isAuthenticated={!!user} />
                     </div>
                     <div className="p-2.5">
-                      <p className="text-xs font-medium text-stone-700 truncate">{listing.title}</p>
-                      {secondary && <p className="text-xs text-stone-400 truncate mt-0.5">{secondary}</p>}
+                      <p className="text-xs font-medium text-stone-700 truncate">{brandAndTitle}</p>
+                      {description && <p className="text-xs text-stone-500 truncate mt-1">{description}</p>}
                     </div>
                   </Link>
                 </div>
