@@ -212,7 +212,7 @@ export default function MessagesPage() {
   const loadConversations = useCallback(async (uid: string) => {
     const { data } = await supabase
       .from('conversations')
-      .select(`*, listing:listings(id, title, price_usd, price_vnd, currency, images), buyer:profiles!conversations_buyer_id_fkey(id, username, full_name, avatar_url, bank_name, bank_account_name, bank_account_number), seller:profiles!conversations_seller_id_fkey(id, username, full_name, avatar_url, bank_name, bank_account_name, bank_account_number)`)
+      .select(`*, listing:listings(id, title, price_usd, price_vnd, currency, listing_images(image_url)), buyer:profiles!conversations_buyer_id_fkey(id, username, full_name, avatar_url, bank_name, bank_account_name, bank_account_number), seller:profiles!conversations_seller_id_fkey(id, username, full_name, avatar_url, bank_name, bank_account_name, bank_account_number)`)
       .or(`buyer_id.eq.${uid},seller_id.eq.${uid}`)
       .order('last_message_at', { ascending: false })
     return data || []
@@ -419,7 +419,7 @@ export default function MessagesPage() {
                 )}
                 {conversations.map((c: any) => {
                   const otherUser = c.buyer_id === user?.id ? c.seller : c.buyer
-                  const thumbnailUrl = Array.isArray(c.listing?.images) ? c.listing.images[0] : c.listing?.images
+                  const thumbnailUrl = c.listing?.listing_images?.[0]?.image_url
                   return (
                     <div
                       key={c.id}
@@ -466,8 +466,8 @@ export default function MessagesPage() {
                 <>
                   {/* Chat header */}
                   <div className="px-6 py-3 border-b border-gray-100 bg-white font-semibold text-sm flex items-center gap-3">
-                    {listing?.images?.[0] && (
-                      <img src={listing.images[0]} alt={listing.title} className="w-9 h-9 rounded-lg object-cover border border-gray-100 shrink-0" />
+                    {listing?.listing_images?.[0]?.image_url && (
+                      <img src={listing.listing_images[0].image_url} alt={listing.title} className="w-9 h-9 rounded-lg object-cover border border-gray-100 shrink-0" />
                     )}
                     <span className="flex-1 truncate">{listing?.title ?? 'Conversation'}</span>
                   </div>

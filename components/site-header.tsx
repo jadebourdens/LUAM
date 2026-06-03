@@ -458,7 +458,7 @@ function SiteHeaderInner() {
           <form
             action={`/${locale}`}
             method="get"
-            className="w-full sm:w-auto sm:flex-1 max-w-sm lg:max-w-md flex gap-2"
+            className="w-full sm:w-auto sm:flex-1 max-w-sm lg:max-w-md flex flex-nowrap items-center gap-2"
           >
             <input
               type="text"
@@ -468,7 +468,7 @@ function SiteHeaderInner() {
             />
             <button
               type="submit"
-              className="bg-[#FF5722] text-white px-4 py-1.5 text-sm rounded-full hover:bg-[#E64A19] transition-colors"
+              className="bg-[#FF5722] text-white px-4 py-1.5 text-sm rounded-full hover:bg-[#E64A19] transition-colors whitespace-nowrap"
             >
               {t('search')}
             </button>
