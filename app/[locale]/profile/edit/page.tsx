@@ -26,6 +26,9 @@ export default function EditProfilePage() {
     location: '',
     bio: '',
     phone: '',
+    bank_name: '',
+    bank_account_name: '',
+    bank_account_number: '',
   })
 
   useEffect(() => {
@@ -39,7 +42,7 @@ export default function EditProfilePage() {
 
       const { data } = await supabase
         .from('profiles')
-        .select('full_name, username, location, bio, phone, avatar_url')
+        .select('full_name, username, location, bio, phone, avatar_url, bank_name, bank_account_name, bank_account_number')
         .eq('id', user.id)
         .single()
 
@@ -50,13 +53,16 @@ export default function EditProfilePage() {
           location: data.location || '',
           bio: data.bio || '',
           phone: data.phone || '',
+          bank_name: data.bank_name || '',
+          bank_account_name: data.bank_account_name || '',
+          bank_account_number: data.bank_account_number || '',
         })
         setAvatarUrl(data.avatar_url || null)
       }
       setLoading(false)
     }
     load()
-  }, [locale, router, supabase]) // Added dependencies
+  }, [locale, router, supabase])
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -79,7 +85,6 @@ export default function EditProfilePage() {
 
     let newAvatarUrl = avatarUrl
 
-    // Upload avatar if a new one was selected
     if (avatarFile) {
       const ext = avatarFile.name.split('.').pop()
       const fileName = `${user.id}/avatar.${ext}`
@@ -210,6 +215,42 @@ export default function EditProfilePage() {
               value={form.bio}
               onChange={(e) => setForm({ ...form, bio: e.target.value })}
             />
+          </div>
+
+          {/* Bank Details */}
+          <div className="border-t border-gray-100 pt-5">
+            <h2 className="text-sm font-semibold text-gray-900 mb-1">Bank Transfer Details</h2>
+            <p className="text-xs text-gray-400 mb-4">Shown to buyers when they accept your price — used for VND bank transfers.</p>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
+                <input
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722]"
+                  placeholder="e.g. Vietcombank, TPBank, MB Bank"
+                  value={form.bank_name}
+                  onChange={(e) => setForm({ ...form, bank_name: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Account Name</label>
+                <input
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722]"
+                  placeholder="Full name on bank account"
+                  value={form.bank_account_name}
+                  onChange={(e) => setForm({ ...form, bank_account_name: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
+                <input
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722]"
+                  placeholder="Bank account number"
+                  value={form.bank_account_number}
+                  onChange={(e) => setForm({ ...form, bank_account_number: e.target.value })}
+                />
+              </div>
+            </div>
           </div>
 
           <div className="flex gap-3 pt-2">

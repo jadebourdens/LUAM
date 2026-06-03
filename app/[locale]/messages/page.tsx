@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useTranslations } from 'next-intl'
 
 type Currency = 'USD' | 'EUR' | 'VND'
+type ConvoStatus = 'open' | 'accepted' | 'waiting_for_verification' | 'completed' | 'cancelled'
 
 const currencySymbols: Record<Currency, string> = { USD: '$', EUR: '€', VND: '₫' }
 
@@ -107,6 +108,64 @@ function NegotiationOffer({ totalPrice, currency, onOfferConfirm, onClose }: Neg
   )
 }
 
+// Bank details card shown to buyer after seller accepts
+function BankDetailsCard({ seller, agreedPrice, currency }: { seller: any; agreedPrice: number; currency: Currency }) {
+  return (
+    <div className="mx-6 my-3 rounded-2xl border border-green-200 bg-green-50 p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-lg">🏦</span>
+        <p className="font-semibold text-green-800 text-sm">Seller accepted — transfer payment</p>
+      </div>
+      <div className="bg-white rounded-xl border border-green-100 p-3 space-y-2 text-sm">
+        <div className="flex justify-between">
+          <span className="text-gray-500">Amount agreed</span>
+          <span className="font-bold text-[#FF5722]">{fmtMoney(agreedPrice, currency)}</span>
+        </div>
+        {seller?.bank_name && (
+          <div className="flex justify-between">
+            <span className="text-gray-500">Bank</span>
+            <span className="font-medium text-gray-900">{seller.bank_name}</span>
+          </div>
+        )}
+        {seller?.bank_account_name && (
+          <div className="flex justify-between">
+            <span className="text-gray-500">Account name</span>
+            <span className="font-medium text-gray-900">{seller.bank_account_name}</span>
+          </div>
+        )}
+        {seller?.bank_account_number && (
+          <div className="flex justify-between">
+            <span className="text-gray-500">Account number</span>
+            <span className="font-bold text-gray-900 tracking-wide">{seller.bank_account_number}</span>
+          </div>
+        )}
+      </div>
+      {(!seller?.bank_name && !seller?.bank_account_number) && (
+        <p className="text-xs text-yellow-700 mt-2">Seller has not added bank details yet. Contact them directly.</p>
+      )}
+    </div>
+  )
+}
+
+// Status banner shown in chat header area
+function StatusBanner({ status, agreedPrice, currency }: { status: ConvoStatus; agreedPrice?: number; currency: Currency }) {
+  if (status === 'open') return null
+  const configs: Record<string, { bg: string; icon: string; label: string }> = {
+    accepted:                 { bg: 'bg-green-50 border-green-200 text-green-800',  icon: '✅', label: 'Offer accepted' + (agreedPrice ? ` — ${fmtMoney(agreedPrice, currency)}` : '') },
+    waiting_for_verification: { bg: 'bg-blue-50 border-blue-200 text-blue-800',     icon: '⏳', label: 'Waiting for seller to confirm payment' },
+    completed:                { bg: 'bg-purple-50 border-purple-200 text-purple-800', icon: '🎉', label: 'Transaction complete' },
+    cancelled:                { bg: 'bg-red-50 border-red-200 text-red-800',        icon: '❌', label: 'Transaction cancelled' },
+  }
+  const cfg = configs[status]
+  if (!cfg) return null
+  return (
+    <div className={`mx-0 px-4 py-2 border-b text-xs font-medium flex items-center gap-2 ${cfg.bg}`}>
+      <span>{cfg.icon}</span>
+      <span>{cfg.label}</span>
+    </div>
+  )
+}
+
 export default function MessagesPage() {
   const t = useTranslations('Messages')
   const params = useParams()
@@ -123,6 +182,9 @@ export default function MessagesPage() {
   const [newMessage, setNewMessage] = useState('')
   const [showOffer, setShowOffer] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<{ id: string; title: string } | null>(null)
+  const [statusUpdating, setStatusUpdating] = useState(false)
+  // Latest offer amount parsed from messages (used for seller to accept)
+  const [pendingOfferAmount, setPendingOfferAmount] = useState<number | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabase = useMemo(() => createClient(), [])
@@ -130,6 +192,31 @@ export default function MessagesPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Parse most recent offer from messages
+  useEffect(() => {
+    if (!messages.length) { setPendingOfferAmount(null); return }
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i]
+      // offer messages look like "💸 Offer: ₫1,000,000" or "$95.00"
+      const match = m.content?.match(/💸 Offer: [₫$€]?([\d,\.]+)/)
+      if (match) {
+        const raw = match[1].replace(/,/g, '')
+        const val = parseFloat(raw)
+        if (!isNaN(val)) { setPendingOfferAmount(val); return }
+      }
+    }
+    setPendingOfferAmount(null)
+  }, [messages])
+
+  const loadConversations = useCallback(async (uid: string) => {
+    const { data } = await supabase
+      .from('conversations')
+      .select(`*, listing:listings(id, title, price_usd, price_vnd, currency, images), buyer:profiles!conversations_buyer_id_fkey(id, username, full_name, avatar_url, bank_name, bank_account_name, bank_account_number), seller:profiles!conversations_seller_id_fkey(id, username, full_name, avatar_url, bank_name, bank_account_name, bank_account_number)`)
+      .or(`buyer_id.eq.${uid},seller_id.eq.${uid}`)
+      .order('last_message_at', { ascending: false })
+    return data || []
+  }, [supabase])
 
   const loadMessages = useCallback(async (convoId: string) => {
     const { data, error } = await supabase
@@ -152,8 +239,7 @@ export default function MessagesPage() {
 
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim() || !activeConversation || !user) return
-    
-    // Explicitly add sender_id here
+
     const receiverId = activeConversation.buyer_id === user.id
       ? activeConversation.seller_id
       : activeConversation.buyer_id
@@ -164,14 +250,40 @@ export default function MessagesPage() {
       receiver_id: receiverId,
       content: content.trim(),
     })
-    
+
     if (!error) {
       setNewMessage('')
       loadMessages(activeConversation.id)
     } else {
-      console.error("Supabase Error:", error)
+      console.error('Supabase Error:', error)
     }
   }, [activeConversation, user, supabase, loadMessages])
+
+  // Core status update function
+  const updateStatus = useCallback(async (newStatus: ConvoStatus, agreedPrice?: number) => {
+    if (!activeConversation) return
+    setStatusUpdating(true)
+    const updates: any = { status: newStatus }
+    if (agreedPrice !== undefined) updates.agreed_price = agreedPrice
+
+    const { error } = await supabase
+      .from('conversations')
+      .update(updates)
+      .eq('id', activeConversation.id)
+
+    if (error) {
+      console.error('Status update error:', error)
+      setStatusUpdating(false)
+      return
+    }
+
+    // Reflect locally immediately
+    setActiveConversation((prev: any) => ({ ...prev, status: newStatus, agreed_price: agreedPrice ?? prev.agreed_price }))
+    setConversations((prev: any[]) =>
+      prev.map((c) => c.id === activeConversation.id ? { ...c, status: newStatus, agreed_price: agreedPrice ?? c.agreed_price } : c)
+    )
+    setStatusUpdating(false)
+  }, [activeConversation, supabase])
 
   const handleOfferConfirm = useCallback((amount: number) => {
     const listing = activeConversation?.listing
@@ -180,6 +292,19 @@ export default function MessagesPage() {
     sendMessage(`💸 Offer: ${fmtMoney(amount, currency)}`)
     setShowOffer(false)
   }, [activeConversation, sendMessage])
+
+  const handleAcceptOffer = useCallback(async () => {
+    if (pendingOfferAmount === null) return
+    await updateStatus('accepted', pendingOfferAmount)
+    // Notify in chat
+    const currency: Currency = activeConversation?.listing?.currency ?? 'USD'
+    sendMessage(`✅ Offer accepted at ${fmtMoney(pendingOfferAmount, currency)}. Please transfer payment to the bank details shown below.`)
+  }, [pendingOfferAmount, updateStatus, activeConversation, sendMessage])
+
+  const handleTransferred = useCallback(async () => {
+    await updateStatus('waiting_for_verification')
+    sendMessage('💳 I have transferred the money. Please check and confirm.')
+  }, [updateStatus, sendMessage])
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -193,16 +318,11 @@ export default function MessagesPage() {
     const { error } = await supabase.from('conversations').delete().eq('id', convoId)
     if (error) { alert('Failed to delete conversation'); return }
 
-    const { data: convos } = await supabase
-      .from('conversations')
-      .select(`*, listing:listings(id, title, price_usd, price_vnd, currency, images), buyer:profiles!conversations_buyer_id_fkey(id, username, full_name, avatar_url), seller:profiles!conversations_seller_id_fkey(id, username, full_name, avatar_url)`)
-      .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
-      .order('last_message_at', { ascending: false })
-
-    setConversations(convos || [])
+    const convos = await loadConversations(user.id)
+    setConversations(convos)
 
     if (activeConversation?.id === convoId) {
-      if (convos && convos.length > 0) {
+      if (convos.length > 0) {
         setActiveConversation(convos[0])
         loadMessages(convos[0].id)
       } else {
@@ -219,22 +339,18 @@ export default function MessagesPage() {
       if (!session) { router.push(`/${locale}/auth/login`); return }
       setUser(session.user)
 
-      const { data: convos } = await supabase
-        .from('conversations')
-        .select(`*, listing:listings(id, title, price_usd, price_vnd, currency, images), buyer:profiles!conversations_buyer_id_fkey(id, username, full_name, avatar_url), seller:profiles!conversations_seller_id_fkey(id, username, full_name, avatar_url)`)
-        .or(`buyer_id.eq.${session.user.id},seller_id.eq.${session.user.id}`)
-        .order('last_message_at', { ascending: false })
+      const convos = await loadConversations(session.user.id)
 
-      if (convos && convos.length > 0) {
+      if (convos.length > 0) {
         setConversations(convos)
-        const targetConvo = conversationId ? convos.find((c) => c.id === conversationId) ?? convos[0] : convos[0]
+        const targetConvo = conversationId ? convos.find((c: any) => c.id === conversationId) ?? convos[0] : convos[0]
         setActiveConversation(targetConvo)
         loadMessages(targetConvo.id)
       }
       setLoading(false)
     }
     init()
-  }, [conversationId, loadMessages, locale, router, supabase])
+  }, [conversationId, loadConversations, loadMessages, locale, router, supabase])
 
   if (loading) return <div className="p-10 text-center">Loading...</div>
 
@@ -244,6 +360,19 @@ export default function MessagesPage() {
     : listing?.currency === 'VND' ? (listing?.price_vnd ?? 0)
     : (listing?.price_usd ?? 0)
   const offerCurrency: Currency = listing?.currency ?? 'USD'
+
+  const isSeller = activeConversation?.seller_id === user?.id
+  const isBuyer  = activeConversation?.buyer_id === user?.id
+  const convoStatus: ConvoStatus = activeConversation?.status ?? 'open'
+  const agreedPrice: number = activeConversation?.agreed_price ?? 0
+  const sellerProfile = activeConversation?.seller
+
+  // Seller sees "Accept Offer" when open and a pending offer exists
+  const showAcceptBtn = isSeller && convoStatus === 'open' && pendingOfferAmount !== null
+  // Buyer sees "I have transferred" when status = accepted
+  const showTransferredBtn = isBuyer && convoStatus === 'accepted'
+  // Show bank details to buyer when accepted or waiting
+  const showBankDetails = isBuyer && (convoStatus === 'accepted' || convoStatus === 'waiting_for_verification')
 
   return (
     <>
@@ -272,6 +401,7 @@ export default function MessagesPage() {
           <h1 className="text-2xl font-bold text-gray-900 mb-3 shrink-0">{t('title')}</h1>
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-1 min-h-0 overflow-hidden">
+            {/* Sidebar */}
             <div className="w-72 border-r border-gray-100 flex flex-col shrink-0">
               <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('conversations')}</p>
@@ -306,6 +436,9 @@ export default function MessagesPage() {
                           <p className="font-semibold text-sm truncate">{otherUser?.username}</p>
                         </div>
                         <p className="text-xs text-gray-400 truncate">{c.listing?.title}</p>
+                        {c.status && c.status !== 'open' && (
+                          <span className="text-[10px] text-[#FF5722] font-medium">{c.status.replace(/_/g, ' ')}</span>
+                        )}
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm({ id: c.id, title: otherUser?.username || 'this conversation' }) }}
@@ -320,16 +453,39 @@ export default function MessagesPage() {
               </div>
             </div>
 
+            {/* Chat panel */}
             <div className="flex-1 flex flex-col min-w-0 bg-white">
               {activeConversation ? (
                 <>
+                  {/* Chat header */}
                   <div className="px-6 py-3 border-b border-gray-100 bg-white font-semibold text-sm flex items-center gap-3">
                     {listing?.images?.[0] && (
                       <img src={listing.images[0]} alt={listing.title} className="w-9 h-9 rounded-lg object-cover border border-gray-100 shrink-0" />
                     )}
-                    {listing?.title ?? 'Conversation'}
+                    <span className="flex-1 truncate">{listing?.title ?? 'Conversation'}</span>
                   </div>
 
+                  {/* Status banner */}
+                  <StatusBanner status={convoStatus} agreedPrice={agreedPrice} currency={offerCurrency} />
+
+                  {/* Seller: Accept Offer bar */}
+                  {showAcceptBtn && (
+                    <div className="px-6 py-3 bg-amber-50 border-b border-amber-200 flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-amber-800">Buyer offered {fmtMoney(pendingOfferAmount!, offerCurrency)}</p>
+                        <p className="text-xs text-amber-600">Accept to share your bank details and proceed with transfer</p>
+                      </div>
+                      <button
+                        onClick={handleAcceptOffer}
+                        disabled={statusUpdating}
+                        className="shrink-0 px-4 py-2 rounded-xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors"
+                      >
+                        {statusUpdating ? '...' : '✅ Accept Offer'}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Messages */}
                   <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3 bg-gray-50">
                     {messages.map((m: any, i: number) => (
                       <div key={i} className={`flex ${m.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}>
@@ -341,6 +497,26 @@ export default function MessagesPage() {
                     <div ref={messagesEndRef} />
                   </div>
 
+                  {/* Bank details card (buyer view, after accepted) */}
+                  {showBankDetails && (
+                    <BankDetailsCard seller={sellerProfile} agreedPrice={agreedPrice} currency={offerCurrency} />
+                  )}
+
+                  {/* Buyer: I have transferred button */}
+                  {showTransferredBtn && (
+                    <div className="px-6 py-3 bg-blue-50 border-t border-blue-200 flex items-center justify-between gap-3">
+                      <p className="text-sm text-blue-800">Transfer complete? Let the seller know.</p>
+                      <button
+                        onClick={handleTransferred}
+                        disabled={statusUpdating}
+                        className="shrink-0 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                      >
+                        {statusUpdating ? '...' : '💳 I have transferred the money'}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Input bar */}
                   <div className="p-4 border-t border-gray-100 bg-white flex items-center gap-2">
                     <button onClick={() => setShowOffer(true)} className="shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-amber-50 hover:bg-amber-100 text-lg border border-amber-200 transition-colors" title={t('make_offer')}>💸</button>
                     <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={handleKeyDown} placeholder={t('type_message')} className="flex-1 border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722]/30 focus:border-[#FF5722]" />
