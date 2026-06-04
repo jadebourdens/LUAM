@@ -194,7 +194,7 @@ export default function MessagesPage() {
     if (!messages.length) { setPendingOfferAmount(null); return }
     for (let i = messages.length - 1; i >= 0; i--) {
       const m = messages[i]
-      const match = m.content?.match(/💸 Offer: [₫$€]?([\d,\.]+)/)
+      const match = m.content?.match(/💸 Offer: [^\d]*([\d,\.]+)/)
       if (match) {
         const raw = match[1].replace(/,/g, '')
         const val = parseFloat(raw)
@@ -300,8 +300,17 @@ export default function MessagesPage() {
 
   const handleMarkCompleted = useCallback(async () => {
     await updateStatus('completed')
+
+    // Mark listing as sold
+    if (activeConversation?.listing?.id) {
+      await supabase
+        .from('listings')
+        .update({ status: 'sold' })
+        .eq('id', activeConversation.listing.id)
+    }
+
     sendMessage('✅ Payment confirmed. Transaction complete!')
-  }, [updateStatus, sendMessage])
+  }, [updateStatus, sendMessage, activeConversation, supabase])
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -512,7 +521,7 @@ export default function MessagesPage() {
                         disabled={statusUpdating}
                         className="flex-1 min-w-fit px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                       >
-                        {statusUpdating ? '...' : t('mark_transferred')}
+                    {statusUpdating ? '...' : '💳 I have transferred the money'}
                       </button>
                     )}
                     {showMarkCompletedBtn && (

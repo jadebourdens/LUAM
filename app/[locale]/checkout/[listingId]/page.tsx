@@ -65,11 +65,16 @@ export default function CheckoutPage() {
     }
 
     if (data.url) {
-      // Opens in a new window
-      window.open(data.url, '_blank')
-      setLoading(false)
-      return
-    }
+  if (data.localPayment) {
+    // Bank transfer — navigate in same tab
+    router.push(data.url)
+  } else {
+    // Stripe — open in new tab
+    window.open(data.url, '_blank')
+  }
+  setLoading(false)
+  return
+}
 
     setError('Missing checkout URL from Stripe')
     setLoading(false)

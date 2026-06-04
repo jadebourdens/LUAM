@@ -42,7 +42,15 @@ export default async function CheckoutSuccessPage({
       .eq('status', 'pending')
       .select('id')
 
-    if (updated && updated.length > 0) {
+if (updated && updated.length > 0) {
+      // Mark listing as sold
+      if (session.metadata?.listing_id) {
+        await supabase
+          .from('listings')
+          .update({ status: 'sold' })
+          .eq('id', session.metadata.listing_id)
+      }
+
       await supabase.from('analytics_events').insert({
         user_id: typeof session.metadata?.buyer_id === 'string' ? session.metadata.buyer_id : null,
         event_name: 'checkout_success',
@@ -50,7 +58,7 @@ export default async function CheckoutSuccessPage({
         metadata: { order_id: orderId, session_id: session.id }
       })
     }
-  }
+    }
 
   const paidAmount = (session.amount_total || 0) / 100
   const currency = (session.currency || 'eur').toUpperCase()

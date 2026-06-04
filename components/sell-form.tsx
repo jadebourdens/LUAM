@@ -94,11 +94,12 @@ export default function SellForm({ locale, onSuccess, defaultCategorySlug }: Pro
     })
 
     // Fetch brands from DB sorted by popularity
-    supabase.from('brands').select('name').order('usage_count', { ascending: false }).then(({ data }) => {
-      if (data) {
-        setBrands(data.map((b) => b.name))
-      }
-    })
+    supabase.from('brands').select('name').order('usage_count', { ascending: false }).then(({ data, error }) => {
+  console.log('brands:', data, 'error:', error)
+  if (data) {
+    setBrands(data.map((b) => b.name))
+  }
+})
   }, [defaultCategorySlug])
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

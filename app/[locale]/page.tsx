@@ -56,7 +56,7 @@ export default async function Home({
   let countQuery = supabase
     .from('listings')
     .select('id', { count: 'exact', head: true })
-    .eq('status', 'active')
+    .in('status', ['active', 'sold'])
 
   if (q) countQuery = countQuery.or(`title.ilike.%${q}%,description.ilike.%${q}%`)
   if (size) countQuery = countQuery.ilike('size', `%${size}%`)
@@ -89,7 +89,7 @@ export default async function Home({
       seller:profiles(id, username, full_name, avatar_url, rating_average),
       images:listing_images(image_url, position)
     `)
-    .eq('status', 'active')
+    .in('status', ['active', 'sold'])
 
   if (q) query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`)
   if (size) query = query.ilike('size', `%${size}%`)
@@ -142,14 +142,21 @@ export default async function Home({
                   <Link href={`/${locale}/listings/${listing.id}`} className="block relative">
                     <div className="relative w-full aspect-square bg-stone-100 overflow-hidden rounded-t-2xl">
                       {firstImage ? (
-                        <Image
-                          src={firstImage}
-                          alt={listing.title}
-                          fill
-                          priority={i === 0 ? true : false}
-                          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
+                        <>
+                          <Image
+                            src={firstImage}
+                            alt={listing.title}
+                            fill
+                            priority={i === 0}
+                            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                          {listing.status === 'sold' && (
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+                              <span className="text-white text-sm font-bold tracking-widest bg-black/60 px-3 py-1 rounded-lg">SOLD</span>
+                            </div>
+                          )}
+                        </>
                       ) : (
                         <div className="absolute inset-0 bg-stone-200 flex items-center justify-center">
                           <span className="text-stone-400 text-xs">{t('no_image')}</span>
