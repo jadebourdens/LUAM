@@ -165,104 +165,126 @@ export default function ListingDetailPage() {
           </div>
 
           {/* Product Details - takes 1 column on lg */}
-          <div className="space-y-6">
-            {/* Title & Price */}
+          <div className="space-y-4 flex flex-col h-full">
+            {/* Title */}
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{listing.title}</h1>
-              <p className="text-2xl font-bold text-[#FF5722] mb-4">{formatPrice()}</p>
+              <h1 className="text-xl font-bold text-gray-900 mb-1">{listing.title}</h1>
+            </div>
 
+            {/* Price */}
+            <div className="pb-3 border-b border-gray-200">
+              <p className="text-2xl font-bold text-[#FF5722]">{formatPrice()}</p>
               {isSold && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm font-medium">
+                <div className="mt-2 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-xs font-medium">
                   This item has been sold.
                 </div>
               )}
             </div>
 
-            {/* Seller Info */}
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="relative w-12 h-12 shrink-0 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center">
-                  {listing.seller?.avatar_url ? (
-                    <Image
-                      src={listing.seller.avatar_url}
-                      alt=""
-                      width={48}
-                      height={48}
-                      className="object-cover rounded-full"
-                    />
-                  ) : (
-                    <span className="text-gray-600">{listing.seller?.full_name?.[0] || 'U'}</span>
+            {/* Specs Table */}
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Details</h3>
+              <table className="w-full text-sm">
+                <tbody>
+                  {listing.category?.name && (
+                    <tr className="border-b border-gray-200">
+                      <td className="py-2 text-gray-600 font-medium">Category</td>
+                      <td className="py-2 text-gray-900 text-right">{listing.category.name}</td>
+                    </tr>
                   )}
-                </div>
-                <div>
-                  <Link
-                    href={`/${locale}/users/${listing.seller?.id}`}
-                    className="font-medium text-gray-900 hover:text-[#FF5722]"
-                  >
-                    {listing.seller?.full_name || 'Anonymous'}
-                  </Link>
-                  <p className="text-sm text-gray-500">{listing.seller?.location}</p>
-                </div>
-              </div>
-              {listing.seller?.rating_count > 0 && (
-                <div className="text-sm text-gray-600">
-                  ⭐ {listing.seller.rating_average.toFixed(1)} ({listing.seller.rating_count} reviews)
-                </div>
-              )}
+                  {listing.brand && (
+                    <tr className="border-b border-gray-200">
+                      <td className="py-2 text-gray-600 font-medium">Brand</td>
+                      <td className="py-2 text-gray-900 text-right">{listing.brand}</td>
+                    </tr>
+                  )}
+                  {listing.color && (
+                    <tr className="border-b border-gray-200">
+                      <td className="py-2 text-gray-600 font-medium">Color</td>
+                      <td className="py-2 text-gray-900 text-right">{listing.color}</td>
+                    </tr>
+                  )}
+                  {listing.size && (
+                    <tr className="border-b border-gray-200">
+                      <td className="py-2 text-gray-600 font-medium">Size</td>
+                      <td className="py-2 text-gray-900 text-right">{listing.size}</td>
+                    </tr>
+                  )}
+                  {listing.condition && (
+                    <tr>
+                      <td className="py-2 text-gray-600 font-medium">Condition</td>
+                      <td className="py-2 text-gray-900 text-right">{conditionLabels[listing.condition]}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
 
-            {/* Action Buttons */}
-            <div className="space-y-3">
+            {/* Description */}
+            {listing.description && (
+              <div className="space-y-2 py-3 border-y border-gray-200">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Description</h3>
+                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{listing.description}</p>
+              </div>
+            )}
+
+            {/* Seller Info */}
+            <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 space-y-2">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Seller</h3>
+              <div className="flex items-center gap-2">
+                <div className="relative w-10 h-10 shrink-0 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center">
+                  {listing.seller?.avatar_url ? (
+                    <Image src={listing.seller.avatar_url} alt="" width={40} height={40} className="object-cover rounded-full" />
+                  ) : (
+                    <span className="text-sm text-gray-600">{listing.seller?.full_name?.[0] || 'U'}</span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <Link href={`/${locale}/users/${listing.seller?.id}`} className="text-sm font-semibold text-gray-900 hover:text-[#FF5722] block truncate">
+                    {listing.seller?.full_name || 'Anonymous'}
+                  </Link>
+                  <p className="text-xs text-gray-500 truncate">{listing.seller?.location}</p>
+                  {listing.seller?.rating_count > 0 && (
+                    <p className="text-xs text-gray-600 mt-1">⭐ {listing.seller.rating_average.toFixed(1)} ({listing.seller.rating_count} reviews)</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Spacer - pushes buttons to bottom */}
+            <div className="flex-1"></div>
+
+            {/* Action Buttons - Primary & Secondary */}
+            <div className="space-y-2 pt-4 border-t border-gray-200">
               {!isSeller && user ? (
                 <>
                   {!isSold ? (
                     <>
-                      <Link
-                        href={`/${locale}/checkout/${listing.id}`}
-                        className="block w-full bg-[#FF5722] text-white py-3 px-4 rounded-lg hover:bg-[#E64A19] font-medium text-center"
-                      >
+                      <Link href={`/${locale}/checkout/${listing.id}`} className="block w-full bg-[#FF5722] text-white py-2 px-4 rounded-lg hover:bg-[#E64A19] font-semibold text-center text-sm">
                         Buy Now
                       </Link>
-                      <button
-                        onClick={handleMessageSeller}
-                        className="w-full py-2 px-4 rounded-lg border border-gray-300 text-gray-700 hover:border-gray-400"
-                      >
+                      <button onClick={handleMessageSeller} className="w-full py-2 px-4 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm">
                         Message Seller
+                      </button>
+                      <button onClick={handleToggleFavorite} disabled={favoriteLoading} className="w-full py-2 px-4 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm disabled:opacity-60">
+                        {favoriteLoading ? 'Saving...' : isFavorited ? '★ Saved' : '☆ Save'}
                       </button>
                     </>
                   ) : (
-                    <button disabled className="w-full bg-gray-300 text-gray-500 py-3 px-4 rounded-lg font-medium cursor-not-allowed">
+                    <button disabled className="w-full bg-gray-300 text-gray-500 py-2 px-4 rounded-lg font-semibold text-sm cursor-not-allowed">
                       Item Sold
                     </button>
                   )}
-                  <button
-                    onClick={handleToggleFavorite}
-                    disabled={favoriteLoading}
-                    className="w-full py-2 px-4 rounded-lg border border-gray-300 text-gray-700 hover:border-gray-400 disabled:opacity-60"
-                  >
-                    {favoriteLoading ? 'Saving...' : isFavorited ? '★ Saved to Favorites' : '☆ Add to Favorites'}
-                  </button>
                 </>
               ) : user ? (
-                <div className="space-y-3">
-                  <Link
-                    href={`/${locale}/listings/${listing.id}/edit`}
-                    className="block w-full text-sm py-2 px-4 rounded-lg border border-gray-300 text-gray-700 text-center"
-                  >
+                <>
+                  <Link href={`/${locale}/listings/${listing.id}/edit`} className="block w-full text-sm py-2 px-4 rounded-lg border border-gray-300 text-gray-700 text-center hover:bg-gray-50">
                     Modify Listing
                   </Link>
-                  <DeleteListingButton
-                    listingId={listing.id}
-                    title={listing.title}
-                    redirectTo={`/${locale}`}
-                    className="w-full text-sm py-2 px-4 rounded-lg border border-red-300 text-red-700"
-                  />
-                </div>
+                  <DeleteListingButton listingId={listing.id} title={listing.title} redirectTo={`/${locale}`} className="w-full text-sm py-2 px-4 rounded-lg border border-red-300 text-red-700 hover:bg-red-50" />
+                </>
               ) : (
-                <Link
-                  href={`/${locale}/auth/login`}
-                  className="block w-full bg-[#FF5722] text-white py-3 px-4 rounded-lg hover:bg-[#E64A19] font-medium text-center"
-                >
+                <Link href={`/${locale}/auth/login`} className="block w-full bg-[#FF5722] text-white py-2 px-4 rounded-lg hover:bg-[#E64A19] font-semibold text-center text-sm">
                   Sign in to Buy
                 </Link>
               )}
@@ -270,25 +292,17 @@ export default function ListingDetailPage() {
 
             {/* Safety Section */}
             {safetyNotice && (
-              <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg text-sm">
+              <div className="bg-blue-50 border border-blue-200 text-blue-700 px-3 py-2 rounded-lg text-xs">
                 {safetyNotice}
               </div>
             )}
 
             {!isSeller && user && (
-              <div className="space-y-2 border-t border-gray-200 pt-4">
-                <button
-                  onClick={handleReportListing}
-                  disabled={safetyLoading}
-                  className="w-full py-2 px-4 text-sm text-gray-600 hover:text-gray-900 rounded-lg border border-gray-200 hover:border-gray-300 disabled:opacity-60"
-                >
+              <div className="space-y-2">
+                <button onClick={handleReportListing} disabled={safetyLoading} className="w-full py-2 px-4 text-xs text-gray-600 hover:text-gray-900 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-60">
                   {safetyLoading ? 'Loading...' : '⚠️ Report Listing'}
                 </button>
-                <button
-                  onClick={handleBlockSeller}
-                  disabled={safetyLoading}
-                  className="w-full py-2 px-4 text-sm text-gray-600 hover:text-gray-900 rounded-lg border border-gray-200 hover:border-gray-300 disabled:opacity-60"
-                >
+                <button onClick={handleBlockSeller} disabled={safetyLoading} className="w-full py-2 px-4 text-xs text-gray-600 hover:text-gray-900 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-60">
                   {safetyLoading ? 'Loading...' : '🚫 Block Seller'}
                 </button>
               </div>
