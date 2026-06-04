@@ -5,10 +5,32 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Currency, ListingCondition } from '@/types/database'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog'
 
-interface Category { id: string; name: string; slug: string }
+interface Category { 
+  id: string
+  name: string
+  slug: string
+  children?: Category[]
+}
 
 const COLORS = ['Black', 'White', 'Red', 'Blue', 'Green', 'Yellow', 'Beige', 'Brown', 'Grey', 'Pink', 'Purple', 'Orange', 'Navy', 'Cream', 'Silver', 'Gold', 'Multi']
+
+const CATEGORY_ICONS: Record<string, string> = {
+  women: '👗',
+  men: '👔',
+  kids: '🧸',
+  home: '🏠',
+  'art-collectibles': '🎨',
+}
 
 const SIZE_OPTIONS_BY_CATEGORY: Record<string, string[]> = {
   'women': ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
@@ -26,9 +48,72 @@ const SIZE_OPTIONS_BY_CATEGORY: Record<string, string[]> = {
   'kids-shoes': ['24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35'],
   'kids-bags': ['One size'],
   'kids-games': ['One size'],
+  'home': ['One size'],
+  'home-textiles': ['One size'],
+  'home-furniture': ['One size'],
+  'home-lighting': ['One size'],
+  'home-kitchen': ['One size'],
+  'home-decor': ['One size'],
+  'art-collectibles': ['One size'],
 }
 
-export default function ListingForm({ locale, initialData }: { locale: string, initialData?: any }) {
+const STATIC_CATEGORIES = [
+  {
+    slug: 'women',
+    label: { en: 'Women', vi: 'Nữ' },
+    children: [
+      { slug: 'women-clothes', label: { en: 'Clothes', vi: 'Quần áo' } },
+      { slug: 'women-shoes', label: { en: 'Shoes', vi: 'Giày dép' } },
+      { slug: 'women-bags', label: { en: 'Bags', vi: 'Túi xách' } },
+      { slug: 'women-accessories', label: { en: 'Accessories / Watches / Jewelry', vi: 'Phụ kiện / Đồng hồ / Trang sức' } },
+    ],
+  },
+  {
+    slug: 'men',
+    label: { en: 'Men', vi: 'Nam' },
+    children: [
+      { slug: 'men-clothes', label: { en: 'Clothes', vi: 'Quần áo' } },
+      { slug: 'men-shoes', label: { en: 'Shoes', vi: 'Giày dép' } },
+      { slug: 'men-bags', label: { en: 'Bags', vi: 'Túi xách' } },
+      { slug: 'men-accessories', label: { en: 'Accessories / Watches / Jewelry', vi: 'Phụ kiện / Đồng hồ / Trang sức' } },
+    ],
+  },
+  {
+    slug: 'kids',
+    label: { en: 'Kids', vi: 'Trẻ em' },
+    children: [
+      { slug: 'kids-clothes', label: { en: 'Clothes', vi: 'Quần áo' } },
+      { slug: 'kids-shoes', label: { en: 'Shoes', vi: 'Giày dép' } },
+      { slug: 'kids-bags', label: { en: 'Bags', vi: 'Túi xách' } },
+      { slug: 'kids-games', label: { en: 'Games', vi: 'Đồ chơi' } },
+    ],
+  },
+  {
+    slug: 'home',
+    label: { en: 'Home', vi: 'Nhà cửa' },
+    children: [
+      { slug: 'home-textiles', label: { en: 'Textiles & Bedding', vi: 'Vải & Chăn ga' } },
+      { slug: 'home-furniture', label: { en: 'Furniture', vi: 'Nội thất' } },
+      { slug: 'home-lighting', label: { en: 'Lighting', vi: 'Đèn' } },
+      { slug: 'home-kitchen', label: { en: 'Kitchen & Dining', vi: 'Bếp & Ăn uống' } },
+      { slug: 'home-decor', label: { en: 'Decor', vi: 'Trang trí' } },
+    ],
+  },
+  {
+    slug: 'art-collectibles',
+    label: { en: 'Art & Collectibles', vi: 'Nghệ thuật & Sưu tầm' },
+    children: [],
+  },
+]
+
+interface ListingFormProps {
+  locale: string
+  initialData?: any
+  isOpen?: boolean
+  onOpenChange?: (open: boolean) => void
+}
+
+export default function ListingForm({ locale, initialData, isOpen = true, onOpenChange }: ListingFormProps) {
   const t = useTranslations('EditListing')
   const router = useRouter()
   const supabase = createClient()
@@ -67,7 +152,7 @@ export default function ListingForm({ locale, initialData }: { locale: string, i
   const availableSizes = getAvailableSizes()
 
   useEffect(() => {
-    supabase.from('categories').select('id, name, slug').is('parent_id', null).then(({ data }) => {
+    supabase.from('categories').select('id, name, slug').then(({ data }) => {
       if (data) setCategories(data)
     })
     supabase.from('brands').select('name').order('usage_count', { ascending: false }).limit(50).then(({ data }) => {
@@ -89,7 +174,7 @@ export default function ListingForm({ locale, initialData }: { locale: string, i
 
       const fileName = `${Date.now()}-${file.name}`
       const { data, error: uploadError } = await supabase.storage
-        .from('listing-images')
+        .from('listings')
         .upload(fileName, file)
 
       if (uploadError) {
@@ -98,7 +183,7 @@ export default function ListingForm({ locale, initialData }: { locale: string, i
         return
       }
 
-      const { data: publicData } = supabase.storage.from('listing-images').getPublicUrl(fileName)
+      const { data: publicData } = supabase.storage.from('listings').getPublicUrl(fileName)
       newUploadedUrls.push(publicData.publicUrl)
     }
 
@@ -110,6 +195,40 @@ export default function ListingForm({ locale, initialData }: { locale: string, i
   const removeImage = (index: number) => {
     setPreviewUrls(previewUrls.filter((_, i) => i !== index))
     setUploadedUrls(uploadedUrls.filter((_, i) => i !== index))
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    const files = Array.from(e.dataTransfer?.files || [])
+    if (files.length === 0) return
+    
+    const imageFiles = files.filter(f => f.type.startsWith('image/'))
+    if (imageFiles.length === 0) {
+      setError('Please drop image files only')
+      return
+    }
+    
+    const input = fileInputRef.current
+    if (input) {
+      const dataTransfer = new DataTransfer()
+      imageFiles.forEach(file => dataTransfer.items.add(file))
+      input.files = dataTransfer.files
+      
+      const event = new Event('change', { bubbles: true })
+      input.dispatchEvent(event)
+    }
   }
 
   const handleBrandInput = (value: string) => {
@@ -198,7 +317,7 @@ export default function ListingForm({ locale, initialData }: { locale: string, i
 
         const { data, error } = await supabase
           .from('listings')
-          .insert([{ ...payload, user_id: user.id }])
+          .insert([{ ...payload, seller_id: user.id }])
           .select()
           .single()
 
@@ -223,31 +342,43 @@ export default function ListingForm({ locale, initialData }: { locale: string, i
 
         router.push(`/${locale}/listings/${data.id}`)
       }
+      
+      if (onOpenChange) onOpenChange(false)
     } catch (err: any) {
       setError(err.message)
       setSaving(false)
     }
   }
 
+  const handleOpenChange = (open: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(open)
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
-      <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-8">
-        <h1 className="text-4xl font-bold mb-2 text-gray-900">{t('title')}</h1>
-        <p className="text-gray-500 mb-8 text-sm">Complete all fields marked with * to list your item</p>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>
+            Complete all fields marked with * to list your item
+          </DialogDescription>
+        </DialogHeader>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-start">
+          <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-start">
             <span className="mr-3 text-lg">⚠️</span>
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Core Details Section */}
           <div className="border border-gray-200 rounded-lg p-6 bg-gray-50/50 hover:bg-gray-50 transition-colors">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6 pb-4 border-b border-gray-200">Core Details</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">Core Details</h2>
             
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Title *</label>
                 <input
@@ -301,9 +432,9 @@ export default function ListingForm({ locale, initialData }: { locale: string, i
 
           {/* Specifications Section */}
           <div className="border border-gray-200 rounded-lg p-6 bg-gray-50/50 hover:bg-gray-50 transition-colors">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6 pb-4 border-b border-gray-200">Specifications</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">Specifications</h2>
             
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Category</label>
                 <select
@@ -312,9 +443,30 @@ export default function ListingForm({ locale, initialData }: { locale: string, i
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors cursor-pointer"
                 >
                   <option value="">Select a category</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
+                  {STATIC_CATEGORIES.map((parent) => {
+                    const matchedParent = categories.find((c) => c.slug === parent.slug)
+                    
+                    if (!parent.children || parent.children.length === 0) {
+                      return (
+                        <option key={parent.slug} value={matchedParent?.id || parent.slug}>
+                          {CATEGORY_ICONS[parent.slug] || '📦'} {parent.label.en}
+                        </option>
+                      )
+                    }
+                    
+                    return (
+                      <optgroup key={parent.slug} label={`${CATEGORY_ICONS[parent.slug] || '📦'} ${parent.label.en}`}>
+                        {parent.children.map((child) => {
+                          const matchedCategory = categories.find((c) => c.slug === child.slug)
+                          return (
+                            <option key={child.slug} value={matchedCategory?.id || child.slug}>
+                              → {child.label.en}
+                            </option>
+                          )
+                        })}
+                      </optgroup>
+                    )
+                  })}
                 </select>
               </div>
 
@@ -402,13 +554,16 @@ export default function ListingForm({ locale, initialData }: { locale: string, i
 
           {/* Visuals Section */}
           <div className="border border-gray-200 rounded-lg p-6 bg-gray-50/50 hover:bg-gray-50 transition-colors">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6 pb-4 border-b border-gray-200">Visuals</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">Visuals</h2>
             
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">Images</label>
               <div 
                 className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-white hover:bg-gray-50 hover:border-orange-400 transition-all cursor-pointer"
                 onClick={() => fileInputRef.current?.click()}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
               >
                 <input
                   ref={fileInputRef}
@@ -455,26 +610,27 @@ export default function ListingForm({ locale, initialData }: { locale: string, i
               )}
             </div>
           </div>
+        </form>
 
-          {/* Action Buttons */}
-          <div className="flex justify-between gap-4 pt-4 border-t border-gray-200">
+        <DialogFooter className="pt-4 border-t border-gray-200">
+          <DialogClose asChild>
             <button
               type="button"
-              onClick={() => router.back()}
               className="flex-1 px-6 py-3 text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 hover:text-gray-900 transition-colors"
             >
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={saving || uploading}
-              className="flex-1 px-6 py-3 bg-[#FF5722] text-white font-semibold rounded-lg hover:bg-[#E64A19] disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md hover:shadow-lg transition-all"
-            >
-              {saving ? 'Saving...' : 'Save Listing'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+          </DialogClose>
+          <button
+            type="submit"
+            disabled={saving || uploading}
+            onClick={handleSubmit}
+            className="flex-1 px-6 py-3 bg-[#FF5722] text-white font-semibold rounded-lg hover:bg-[#E64A19] disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md hover:shadow-lg transition-all"
+          >
+            {saving ? 'Saving...' : 'Save Listing'}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

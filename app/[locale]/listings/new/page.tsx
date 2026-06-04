@@ -1,4 +1,4 @@
-import ListingForm from '@/components/listings/ListingForm';
+import ListingFormWrapper from './ListingFormWrapper';
 
 export default async function NewListingPage({ 
   params 
@@ -8,10 +8,8 @@ export default async function NewListingPage({
   const { locale } = await params;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-3xl mx-auto px-4">
-        <ListingForm locale={locale} />
-      </div>
+    <div className="fixed inset-0 flex items-center justify-center">
+      <ListingFormWrapper locale={locale} />
     </div>
   );
 }
