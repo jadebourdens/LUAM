@@ -23,7 +23,7 @@ export default function PhotoGallery({ images, title, isSold }: PhotoGalleryProp
 
   if (sortedImages.length === 0) {
     return (
-      <div className="relative w-full h-96 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400">
+      <div className="relative w-full h-[500px] bg-gray-200 rounded-lg flex items-center justify-center text-gray-400">
         No image
       </div>
     )
@@ -42,42 +42,6 @@ export default function PhotoGallery({ images, title, isSold }: PhotoGalleryProp
     setSelectedImageIndex((selectedImageIndex - 1 + sortedImages.length) % sortedImages.length)
   }
 
-  // Single image: full width hero
-  if (sortedImages.length === 1) {
-    return (
-      <>
-        <div
-          className="relative w-full h-96 bg-gray-200 rounded-xl overflow-hidden cursor-pointer hover:opacity-90 transition"
-          onClick={() => handleImageClick(0)}
-        >
-          {isSold && (
-            <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
-              <span className="text-white text-4xl font-bold">SOLD</span>
-            </div>
-          )}
-          <Image
-            src={sortedImages[0].image_url}
-            alt={`${title} - Main`}
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority
-          />
-        </div>
-        <ImageModal
-          image={sortedImages[selectedImageIndex]}
-          title={title}
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onNext={handleNextImage}
-          onPrev={handlePrevImage}
-          currentIndex={selectedImageIndex}
-          totalImages={sortedImages.length}
-        />
-      </>
-    )
-  }
-
   // Multi-image: hero (left) + thumbnails (right) filling space
   const heroImage = sortedImages[0]
   const thumbnails = sortedImages.slice(1)
@@ -86,8 +50,9 @@ export default function PhotoGallery({ images, title, isSold }: PhotoGalleryProp
   const displayThumbnails = thumbnails.slice(0, maxThumbnails)
   const remainingCount = thumbnails.length - maxThumbnails
 
-  // Dynamic thumbnail grid layout to fill space
   const renderThumbnailGrid = () => {
+    if (displayThumbnails.length === 0) return null
+
     if (displayThumbnails.length === 1) {
       return (
         <div className="h-full">
@@ -132,7 +97,6 @@ export default function PhotoGallery({ images, title, isSold }: PhotoGalleryProp
       )
     }
 
-    // 4 images: 2x2 grid
     return (
       <div className="grid grid-cols-2 grid-rows-2 gap-2 h-full">
         {displayThumbnails.map((img, idx) => (
@@ -152,9 +116,9 @@ export default function PhotoGallery({ images, title, isSold }: PhotoGalleryProp
 
   return (
     <>
-      <div className="grid grid-cols-3 gap-4 h-96">
-        {/* Hero Image - Left, spans 2 columns */}
-        <div className="col-span-2">
+      <div className={`grid ${sortedImages.length > 1 ? 'grid-cols-3' : 'grid-cols-1'} gap-4 h-[500px]`}>
+        {/* Hero Image */}
+        <div className={sortedImages.length > 1 ? 'col-span-2' : 'col-span-1'}>
           <div
             className="relative w-full h-full bg-gray-200 rounded-xl overflow-hidden cursor-pointer hover:opacity-90 transition"
             onClick={() => handleImageClick(0)}
@@ -168,20 +132,21 @@ export default function PhotoGallery({ images, title, isSold }: PhotoGalleryProp
               src={heroImage.image_url}
               alt={`${title} - Primary`}
               fill
-              sizes="66vw"
+              sizes={sortedImages.length > 1 ? "66vw" : "100vw"}
               className="object-cover"
               priority
             />
           </div>
         </div>
 
-        {/* Thumbnail Grid - Right, spans 1 column */}
-        <div className="col-span-1">
-          {renderThumbnailGrid()}
-        </div>
+        {/* Thumbnail Grid */}
+        {sortedImages.length > 1 && (
+          <div className="col-span-1">
+            {renderThumbnailGrid()}
+          </div>
+        )}
       </div>
 
-      {/* Modal */}
       <ImageModal
         image={sortedImages[selectedImageIndex]}
         title={title}

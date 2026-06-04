@@ -363,3 +363,34 @@ Implementing the "Filters" toggle button to hide those extra fields until they a
 Updating the CSS to clearly distinguish the Global Search from the local Filter bar?
 
 Creating a cleaner Home Page layout by moving the advanced filters exclusively to your search results page?
+
+
+
+
+June 4
+ Build clean! ✓                                                                                                                                           
+                                                                                                                                                              
+     Changes applied to listing detail page:                                                                                                                  
+                                                                                                                                                              
+     Right column reorganization (top to bottom):                                                                                                             
+     1. Title - Smaller font (text-xl)                                                                                                                        
+     2. Price - Large, separated by border                                                                                                                    
+     3. Details Table - All specs (Category, Brand, Color, Size, Condition) in compact table format                                                           
+     4. Description - Reduced font, bordered section                                                                                                          
+     5. Seller Info - Compact card with avatar, name, location, rating                                                                                        
+     6. Spacer - Flexible space that pushes buttons to bottom                                                                                                 
+     7. Action Buttons - Primary (Buy Now) + Secondary (Message, Save)                                                                                        
+     8. Safety Options - Report/Block at very bottom                                                                                                          
+                                                                                                                                                              
+     Key improvements:                                                                                                                                        
+     - All info visible before scrolling to Buy button                                                                                                        
+     - Specs in table format (clean, scannable)                                                                                                               
+     - Reduced font sizes (text-sm, text-xs)                                                                                                                  
+     - Logical button flow: Buy → Message → Save → Report/Block                                                                                               
+     - Seller info compact but complete (avatar, rating, location)                                                                                            
+     - Buttons at bottom with spacer (user must review all info first)                                                                                        
+                                                                                                                                                              
+     Test at: http://localhost:3000/en/listings/b22e26ca-8897-4cae-933f-60880c12a552                                                                          
+                                                                                                                                                              
+     Done?                                                                                                                                                    
+                       
