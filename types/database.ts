@@ -45,6 +45,8 @@ export interface Listing {
   condition?: ListingCondition
   brand?: string
   color?: string
+  is_handcrafted?: boolean
+  is_artisanal?: boolean
   status: ListingStatus
   view_count: number
   favorite_count: number

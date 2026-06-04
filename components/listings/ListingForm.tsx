@@ -55,8 +55,6 @@ export default function ListingForm({ locale, initialData }: { locale: string, i
     condition: initialData?.condition || 'good' as ListingCondition,
     size: initialData?.size || '',
     color: initialData?.color || '',
-    is_handcrafted: initialData?.is_handcrafted || false,
-    is_artisanal: initialData?.is_artisanal || false,
   })
 
   const getAvailableSizes = () => {
@@ -146,8 +144,6 @@ export default function ListingForm({ locale, initialData }: { locale: string, i
         description: form.description,
         currency: form.currency,
         condition: form.condition,
-        is_handcrafted: form.is_handcrafted,
-        is_artisanal: form.is_artisanal,
         category_id: form.category_id || null,
         size: form.size || null,
         color: form.color || null,
@@ -400,27 +396,6 @@ export default function ListingForm({ locale, initialData }: { locale: string, i
                   <option value="fair">Fair</option>
                   <option value="worn">Worn</option>
                 </select>
-              </div>
-
-              <div className="space-y-3 pt-2">
-                <label className="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={form.is_handcrafted}
-                    onChange={(e) => setForm({ ...form, is_handcrafted: e.target.checked })}
-                    className="w-4 h-4 rounded border border-gray-300 text-orange-500 focus:ring-2 focus:ring-orange-200"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Handcrafted</span>
-                </label>
-                <label className="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={form.is_artisanal}
-                    onChange={(e) => setForm({ ...form, is_artisanal: e.target.checked })}
-                    className="w-4 h-4 rounded border border-gray-300 text-orange-500 focus:ring-2 focus:ring-orange-200"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Artisanal</span>
-                </label>
               </div>
             </div>
           </div>
