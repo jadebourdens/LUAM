@@ -182,5 +182,18 @@
     "password_mismatch": "Passwords do not match",
     "password_short": "Password must be at least 6 characters",
     "success": "Account created successfully! Check your email to verify your account. Redirecting to login..."
+  },
+  "sellers": {
+    "title": "Sellers",
+    "breadcrumb": "Sellers",
+    "independentSeller": "Independent Seller",
+    "memberSince": "Member since",
+    "items": "{count} items",
+    "item": "{count} item",
+    "allItems": "All items",
+    "contactSeller": "Contact seller",
+    "noItems": "No items yet",
+    "reviews": "Reviews",
+    "notFound": "Seller not found"
   }
 }

@@ -47,10 +47,11 @@ export default async function CategoryPage({ params }: Props) {
   const { locale, slug } = await params
   const supabase = await createClient()
 
+ // TO THIS:
   const { data: category } = await supabase
     .from('categories')
     .select('id, slug')
-    .eq('slug', slug)
+    .ilike('slug', slug) // .ilike is case-insensitive
     .single()
 
   if (!category) notFound()

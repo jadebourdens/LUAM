@@ -104,6 +104,17 @@ const BASE_ICON = {
   strokeLinejoin: 'round' as const,
 }
 
+function StoreIcon() {
+  return (
+    <svg {...BASE_ICON}>
+      <rect x="3" y="3" width="7" height="7" />
+      <rect x="14" y="3" width="7" height="7" />
+      <rect x="14" y="14" width="7" height="7" />
+      <rect x="3" y="14" width="7" height="7" />
+    </svg>
+  )
+}
+
 function MessageIcon() {
   return (
     <svg {...BASE_ICON}>
@@ -335,7 +346,7 @@ function SearchBar({ onToggleFilters }: { onToggleFilters: () => void }) {
 }
 
 // ─────────────────────────────────────────────
-// CategoryNav (Mega Menu)
+// CategoryNav
 // ─────────────────────────────────────────────
 
 function CategoryNav() {
@@ -429,7 +440,7 @@ function CategoryNav() {
 }
 
 // ─────────────────────────────────────────────
-// SiteHeader (inner)
+// SiteHeader
 // ─────────────────────────────────────────────
 
 function SiteHeaderInner() {
@@ -465,7 +476,6 @@ function SiteHeaderInner() {
         return
       }
 
-      // Count unread messages
       const { count: msgCount } = await supabase
         .from('chat_messages')
         .select('*, conversation:conversations!chat_messages_conversation_id_fkey(status)', { count: 'exact', head: true })
@@ -475,7 +485,6 @@ function SiteHeaderInner() {
 
       setUnreadCount(msgCount || 0)
 
-      // Load notifications
       const { data: notifData, count: nCount } = await supabase
         .from('notifications')
         .select('*', { count: 'exact' })
@@ -487,7 +496,6 @@ function SiteHeaderInner() {
       setNotifCount(nCount || 0)
       setNotifs(notifData || [])
 
-      // Realtime subscription for new messages
       if (subscriptionRef.current) supabase.removeChannel(subscriptionRef.current)
 
       subscriptionRef.current = supabase
@@ -527,11 +535,8 @@ function SiteHeaderInner() {
 
   return (
     <header className="bg-white shadow-md border-b border-stone-100 sticky top-0" style={{ zIndex: 9000 }}>
-      {/* ── Top bar ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         <div className="flex items-center justify-between gap-3">
-
-          {/* Logo */}
           <Link
             href={`/${locale}`}
             className="text-2xl font-black tracking-tight select-none whitespace-nowrap flex-shrink-0"
@@ -541,12 +546,10 @@ function SiteHeaderInner() {
             <span className="text-stone-900">m</span>
           </Link>
 
-          {/* Search + Filter */}
           <div className="flex-1 px-4">
             <SearchBar onToggleFilters={() => setShowFilters((v) => !v)} />
           </div>
 
-          {/* Action icons */}
           <div className="flex items-center gap-1 flex-shrink-0">
             {user ? (
               <>
@@ -557,11 +560,14 @@ function SiteHeaderInner() {
                   <PlusIcon /> {tNav('sell')}
                 </Link>
 
+                <IconLink href={`/${locale}/dashboard`} label={locale === 'vi' ? 'Cửa hàng của tôi' : 'My Boutique'}>
+                  <StoreIcon />
+                </IconLink>
+
                 <IconLink href={`/${locale}/messages`} label={tNav('messages')} badge={unreadCount}>
                   <MessageIcon />
                 </IconLink>
 
-                {/* Notification Bell */}
                 <div className="relative">
                   <button
                     onClick={() => setShowNotifs((v) => !v)}
@@ -661,7 +667,6 @@ function SiteHeaderInner() {
         </div>
       </div>
 
-      {/* ── Filters ── */}
       {showFilters && (
         <div className="bg-stone-50 border-b border-stone-100 px-4 sm:px-6 lg:px-8 py-3">
           <div className="max-w-7xl mx-auto">
@@ -687,10 +692,6 @@ function SiteHeaderInner() {
     </header>
   )
 }
-
-// ─────────────────────────────────────────────
-// Export
-// ─────────────────────────────────────────────
 
 export default function SiteHeader() {
   return (

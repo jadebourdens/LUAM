@@ -19,7 +19,7 @@ export default function PhotoGallery({ images, title, isSold }: PhotoGalleryProp
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const sortedImages = [...(images || [])].sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0))
+  const sortedImages = [...(images || [])].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
 
   if (sortedImages.length === 0) {
     return (
@@ -42,109 +42,129 @@ export default function PhotoGallery({ images, title, isSold }: PhotoGalleryProp
     setSelectedImageIndex((selectedImageIndex - 1 + sortedImages.length) % sortedImages.length)
   }
 
-  // Multi-image: hero (left) + thumbnails (right) filling space
-  const heroImage = sortedImages[0]
-  const thumbnails = sortedImages.slice(1)
-  const maxThumbnails = 4
-  const showOverlay = thumbnails.length > maxThumbnails
-  const displayThumbnails = thumbnails.slice(0, maxThumbnails)
-  const remainingCount = thumbnails.length - maxThumbnails
-
-  const renderThumbnailGrid = () => {
-    if (displayThumbnails.length === 0) return null
-
-    if (displayThumbnails.length === 1) {
-      return (
-        <div className="h-full">
-          <div
-            className="relative h-full bg-gray-200 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition"
-            onClick={() => handleImageClick(1)}
-          >
-            {isSold && <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10"><span className="text-white text-sm font-bold">SOLD</span></div>}
-            <Image src={displayThumbnails[0].image_url} alt={`${title} - Thumbnail 1`} fill sizes="25vw" className="object-cover" priority />
-          </div>
-        </div>
-      )
-    }
-
-    if (displayThumbnails.length === 2) {
-      return (
-        <div className="grid grid-rows-2 gap-2 h-full">
-          {displayThumbnails.map((img, idx) => (
-            <div key={idx} className="relative bg-gray-200 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition" onClick={() => handleImageClick(idx + 1)}>
-              {isSold && <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10"><span className="text-white text-xs font-bold">SOLD</span></div>}
-              <Image src={img.image_url} alt={`${title} - Thumbnail ${idx + 2}`} fill sizes="25vw" className="object-cover" priority={idx === 0} />
-            </div>
-          ))}
-        </div>
-      )
-    }
-
-    if (displayThumbnails.length === 3) {
-      return (
-        <div className="grid grid-cols-2 grid-rows-2 gap-2 h-full">
-          <div className="row-span-2 col-span-1 relative bg-gray-200 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition" onClick={() => handleImageClick(1)}>
-            {isSold && <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10"><span className="text-white text-xs font-bold">SOLD</span></div>}
-            <Image src={displayThumbnails[0].image_url} alt={`${title} - Thumbnail 1`} fill sizes="12vw" className="object-cover" priority />
-          </div>
-          {displayThumbnails.slice(1).map((img, idx) => (
-            <div key={idx + 1} className="relative bg-gray-200 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition" onClick={() => handleImageClick(idx + 2)}>
-              {isSold && <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10"><span className="text-white text-xs font-bold">SOLD</span></div>}
-              <Image src={img.image_url} alt={`${title} - Thumbnail ${idx + 2}`} fill sizes="12vw" className="object-cover" priority={idx === 0} />
-            </div>
-          ))}
-        </div>
-      )
-    }
-
-    return (
-      <div className="grid grid-cols-2 grid-rows-2 gap-2 h-full">
-        {displayThumbnails.map((img, idx) => (
-          <div key={idx} className="relative bg-gray-200 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition" onClick={() => handleImageClick(idx + 1)}>
-            {isSold && <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10"><span className="text-white text-xs font-bold">SOLD</span></div>}
-            <Image src={img.image_url} alt={`${title} - Thumbnail ${idx + 2}`} fill sizes="12vw" className="object-cover" priority={idx === 0} />
-            {showOverlay && idx === displayThumbnails.length - 1 && (
-              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                <span className="text-white font-bold text-lg">+{remainingCount}</span>
-              </div>
-            )}
-          </div>
-        ))}
+  const SoldOverlay = ({ large = false }: { large?: boolean }) => (
+    isSold ? (
+      <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+        <span className={`text-white font-bold ${large ? 'text-4xl' : 'text-sm'}`}>SOLD</span>
       </div>
+    ) : null
+  )
+
+  // Reusable tile: wrapper handles sizing, Image uses fill (no conflicting styles)
+  const ImageTile = ({
+    src,
+    alt,
+    index,
+    sizes,
+    large = false,
+    overlay,
+    priority = false,
+  }: {
+    src: string
+    alt: string
+    index: number
+    sizes: string
+    large?: boolean
+    overlay?: React.ReactNode
+    priority?: boolean
+  }) => (
+    <div
+      className="relative w-full h-full bg-gray-200 overflow-hidden cursor-pointer hover:opacity-90 transition rounded-xl"
+      onClick={() => handleImageClick(index)}
+    >
+      <SoldOverlay large={large} />
+      {/* position:relative on wrapper + fill on Image is the correct Next.js pattern */}
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes={sizes}
+        className="object-cover"
+        priority={priority}
+      />
+      {overlay}
+    </div>
+  )
+
+  // ─── Single image ────────────────────────────────────────────────────────────
+  if (sortedImages.length === 1) {
+    return (
+      <>
+        <div className="w-full h-[500px]">
+          <ImageTile
+            src={sortedImages[0].image_url}
+            alt={`${title} - Primary`}
+            index={0}
+            sizes="100vw"
+            large
+            priority
+          />
+        </div>
+        <ImageModal
+          image={sortedImages[selectedImageIndex]}
+          title={title}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onNext={handleNextImage}
+          onPrev={handlePrevImage}
+          currentIndex={selectedImageIndex}
+          totalImages={sortedImages.length}
+        />
+      </>
     )
   }
 
+  // ─── Multi-image: collage layout ─────────────────────────────────────────────
+  // Hero (~65% wide, full height) + right column with up to 2 stacked thumbnails
+  const heroImage = sortedImages[0]
+  const rest = sortedImages.slice(1)
+  const maxRight = 2
+  const displayRight = rest.slice(0, maxRight)
+  const hiddenCount = rest.length - maxRight
+
   return (
     <>
-      <div className={`grid ${sortedImages.length > 1 ? 'grid-cols-3' : 'grid-cols-1'} gap-4 h-[500px]`}>
-        {/* Hero Image */}
-        <div className={sortedImages.length > 1 ? 'col-span-2' : 'col-span-1'}>
-          <div
-            className="relative w-full h-full bg-gray-200 rounded-xl overflow-hidden cursor-pointer hover:opacity-90 transition"
-            onClick={() => handleImageClick(0)}
-          >
-            {isSold && (
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
-                <span className="text-white text-4xl font-bold">SOLD</span>
-              </div>
-            )}
-            <Image
-              src={heroImage.image_url}
-              alt={`${title} - Primary`}
-              fill
-              sizes={sortedImages.length > 1 ? "66vw" : "100vw"}
-              className="object-cover"
-              priority
-            />
-          </div>
+      <div className="flex gap-2 h-[500px]">
+
+        {/* Hero */}
+        <div className="relative flex-[2]">
+          <ImageTile
+            src={heroImage.image_url}
+            alt={`${title} - Primary`}
+            index={0}
+            sizes="65vw"
+            large
+            priority
+          />
         </div>
 
-        {/* Thumbnail Grid */}
-        {sortedImages.length > 1 && (
-          <div className="col-span-1">
-            {renderThumbnailGrid()}
-          </div>
-        )}
+        {/* Right column */}
+        <div className="flex flex-col gap-2 flex-1">
+          {displayRight.map((img, idx) => {
+            const globalIndex = idx + 1
+            const isLast = idx === displayRight.length - 1
+            const showPlusOverlay = isLast && hiddenCount > 0
+
+            return (
+              <div key={img.image_url + idx} className="relative flex-1">
+                <ImageTile
+                  src={img.image_url}
+                  alt={`${title} - Photo ${globalIndex + 1}`}
+                  index={globalIndex}
+                  sizes="35vw"
+                  priority={idx === 0}
+                  overlay={
+                    showPlusOverlay ? (
+                      <div className="absolute inset-0 bg-black/55 flex items-center justify-center z-10">
+                        <span className="text-white font-bold text-2xl">+{hiddenCount}</span>
+                      </div>
+                    ) : undefined
+                  }
+                />
+              </div>
+            )
+          })}
+        </div>
       </div>
 
       <ImageModal

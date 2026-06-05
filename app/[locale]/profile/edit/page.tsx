@@ -22,6 +22,7 @@ export default function EditProfilePage() {
 
   const [form, setForm] = useState({
     full_name: '',
+    brand_name: '',
     username: '',
     location: '',
     bio: '',
@@ -42,13 +43,13 @@ export default function EditProfilePage() {
 
       const { data } = await supabase
         .from('profiles')
-        .select('full_name, username, location, bio, phone, avatar_url, bank_name, bank_account_name, bank_account_number')
-        .eq('id', user.id)
+        .select('full_name, brand_name, username, location, bio, phone, avatar_url, bank_name, bank_account_name, bank_account_number')        .eq('id', user.id)
         .single()
 
       if (data) {
         setForm({
           full_name: data.full_name || '',
+          brand_name: data.brand_name || '',
           username: data.username || '',
           location: data.location || '',
           bio: data.bio || '',
@@ -171,7 +172,17 @@ export default function EditProfilePage() {
               onChange={(e) => setForm({ ...form, full_name: e.target.value })}
             />
           </div>
-
+{/* Brand Name */}
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">Brand Name</label>
+  <input
+    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5722]"
+    placeholder="Your shop or brand name e.g. LUAM Studio"
+    value={form.brand_name}
+    onChange={(e) => setForm({ ...form, brand_name: e.target.value })}
+  />
+  <p className="text-xs text-gray-400 mt-1">This is what buyers will see as your seller name.</p>
+</div>
           {/* Username */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>

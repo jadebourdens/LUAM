@@ -11,6 +11,7 @@ export interface Profile {
   email: string
   username?: string
   full_name?: string
+  brand_name?: string | null
   avatar_url?: string
   bio?: string
   location?: string
