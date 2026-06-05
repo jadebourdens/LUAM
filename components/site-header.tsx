@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useRef, useState, Suspense } from 'react'
+import { useEffect, useRef, useState, Suspense, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useTranslations } from 'next-intl'
 
@@ -16,10 +16,10 @@ const LANGUAGES = [
 ]
 
 const CATEGORY_ICONS: Record<string, string> = {
-  women:            '👗',
-  men:              '👔',
-  kids:             '🧸',
-  home:             '🏠',
+  women:              '👗',
+  men:                '👔',
+  kids:               '🧸',
+  home:               '🏠',
   'art-collectibles': '🎨',
 }
 
@@ -28,20 +28,20 @@ const STATIC_CATEGORIES = [
     slug: 'women',
     label: { en: 'Women', vi: 'Nữ' },
     children: [
-      { slug: 'women-clothes',      label: { en: 'Clothes',                       vi: 'Quần áo' } },
-      { slug: 'women-shoes',        label: { en: 'Shoes',                         vi: 'Giày dép' } },
-      { slug: 'women-bags',         label: { en: 'Bags',                          vi: 'Túi xách' } },
-      { slug: 'women-accessories',  label: { en: 'Accessories / Watches / Jewelry', vi: 'Phụ kiện / Đồng hồ / Trang sức' } },
+      { slug: 'women-clothes',     label: { en: 'Clothes',                         vi: 'Quần áo' } },
+      { slug: 'women-shoes',       label: { en: 'Shoes',                           vi: 'Giày dép' } },
+      { slug: 'women-bags',        label: { en: 'Bags',                            vi: 'Túi xách' } },
+      { slug: 'women-accessories', label: { en: 'Accessories / Watches / Jewelry', vi: 'Phụ kiện / Đồng hồ / Trang sức' } },
     ],
   },
   {
     slug: 'men',
     label: { en: 'Men', vi: 'Nam' },
     children: [
-      { slug: 'men-clothes',      label: { en: 'Clothes',                       vi: 'Quần áo' } },
-      { slug: 'men-shoes',        label: { en: 'Shoes',                         vi: 'Giày dép' } },
-      { slug: 'men-bags',         label: { en: 'Bags',                          vi: 'Túi xách' } },
-      { slug: 'men-accessories',  label: { en: 'Accessories / Watches / Jewelry', vi: 'Phụ kiện / Đồng hồ / Trang sức' } },
+      { slug: 'men-clothes',     label: { en: 'Clothes',                         vi: 'Quần áo' } },
+      { slug: 'men-shoes',       label: { en: 'Shoes',                           vi: 'Giày dép' } },
+      { slug: 'men-bags',        label: { en: 'Bags',                            vi: 'Túi xách' } },
+      { slug: 'men-accessories', label: { en: 'Accessories / Watches / Jewelry', vi: 'Phụ kiện / Đồng hồ / Trang sức' } },
     ],
   },
   {
@@ -58,11 +58,11 @@ const STATIC_CATEGORIES = [
     slug: 'home',
     label: { en: 'Home', vi: 'Nhà cửa' },
     children: [
-      { slug: 'home-textiles',   label: { en: 'Textiles & Bedding', vi: 'Vải & Chăn ga' } },
-      { slug: 'home-furniture',  label: { en: 'Furniture',          vi: 'Nội thất' } },
-      { slug: 'home-lighting',   label: { en: 'Lighting',           vi: 'Đèn' } },
-      { slug: 'home-kitchen',    label: { en: 'Kitchen & Dining',   vi: 'Bếp & Ăn uống' } },
-      { slug: 'home-decor',      label: { en: 'Decor',              vi: 'Trang trí' } },
+      { slug: 'home-textiles',  label: { en: 'Textiles & Bedding', vi: 'Vải & Chăn ga' } },
+      { slug: 'home-furniture', label: { en: 'Furniture',          vi: 'Nội thất' } },
+      { slug: 'home-lighting',  label: { en: 'Lighting',           vi: 'Đèn' } },
+      { slug: 'home-kitchen',   label: { en: 'Kitchen & Dining',   vi: 'Bếp & Ăn uống' } },
+      { slug: 'home-decor',     label: { en: 'Decor',              vi: 'Trang trí' } },
     ],
   },
   {
@@ -87,6 +87,14 @@ type Category = {
   slug: string
   label: LocaleString
   children: SubCategory[]
+}
+
+type NotifRow = {
+  id: string
+  title: string
+  message: string
+  link?: string
+  created_at: string
 }
 
 // ─────────────────────────────────────────────
@@ -172,7 +180,7 @@ function PlusIcon() {
 function FilterIcon() {
   return (
     <svg {...BASE_ICON} width={18} height={18}>
-      <line x1="4" y1="6" x2="20" y2="6" />
+      <line x1="4" y1="6"  x2="20" y2="6" />
       <line x1="4" y1="12" x2="20" y2="12" />
       <line x1="4" y1="18" x2="20" y2="18" />
     </svg>
@@ -250,10 +258,10 @@ function IconLink({
 // ─────────────────────────────────────────────
 
 function LanguagePicker() {
-  const [open, setOpen]   = useState(false)
-  const pathname          = usePathname()
-  const ref               = useRef<HTMLDivElement>(null)
-  const currentLocale     = pathname.startsWith('/vi') ? 'VI' : 'EN'
+  const [open, setOpen] = useState(false)
+  const pathname        = usePathname()
+  const ref             = useRef<HTMLDivElement>(null)
+  const currentLocale   = pathname.startsWith('/vi') ? 'VI' : 'EN'
 
   useEffect(() => {
     if (!open) return
@@ -314,7 +322,7 @@ function LanguagePicker() {
 
 function SearchBar({ onToggleFilters }: { onToggleFilters: () => void }) {
   const pathname = usePathname()
-  const locale = pathname.startsWith('/vi') ? 'vi' : 'en'
+  const locale   = pathname.startsWith('/vi') ? 'vi' : 'en'
 
   return (
     <div className="flex items-center gap-3">
@@ -350,10 +358,10 @@ function SearchBar({ onToggleFilters }: { onToggleFilters: () => void }) {
 // ─────────────────────────────────────────────
 
 function CategoryNav() {
-  const pathname    = usePathname()
-  const locale      = pathname.startsWith('/vi') ? 'vi' : 'en'
+  const pathname   = usePathname()
+  const locale     = pathname.startsWith('/vi') ? 'vi' : 'en'
   const [activeSlug, setActiveSlug] = useState<string | null>(null)
-  const timeoutRef  = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleMouseEnter = (slug: string) => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current)
@@ -444,94 +452,149 @@ function CategoryNav() {
 // ─────────────────────────────────────────────
 
 function SiteHeaderInner() {
-  const pathname        = usePathname()
-  const tNav            = useTranslations('Nav')
-  const tHome           = useTranslations('Home')
-  const [user, setUser] = useState<any>(null)
-  const [currentUser, setCurrentUser] = useState<any>(null)
+  const pathname = usePathname()
+  const tNav     = useTranslations('Nav')
+  const tHome    = useTranslations('Home')
+  const locale   = pathname.startsWith('/vi') ? 'vi' : 'en'
+
+  // FIX #2: Merged user + currentUser into a single state to avoid race conditions
+  const [user, setUser]           = useState<any>(null)
   const [unreadCount, setUnreadCount] = useState(0)
   const [notifCount, setNotifCount]   = useState(0)
-  const [notifs, setNotifs]           = useState<any[]>([])
+  const [notifs, setNotifs]           = useState<NotifRow[]>([])
   const [showNotifs, setShowNotifs]   = useState(false)
   const [showFilters, setShowFilters] = useState(false)
-  const locale          = pathname.startsWith('/vi') ? 'vi' : 'en'
+
   const subscriptionRef = useRef<any>(null)
   const supabaseRef     = useRef(createClient())
   const supabase        = supabaseRef.current
 
+  // FIX #4: Ref + outside-click handler for notifications dropdown
+  const notifRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
+    if (!showNotifs) return
+    const handleClick = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setShowNotifs(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [showNotifs])
+
+  // FIX #5: Reset filter bar on route change
+  useEffect(() => {
+    setShowFilters(false)
+  }, [pathname])
+
+  const setupRealtimeChannel = useCallback((userId: string) => {
+    // FIX #3: Always clean up existing channel before creating a new one
+    if (subscriptionRef.current) {
+      supabase.removeChannel(subscriptionRef.current)
+      subscriptionRef.current = null
+    }
+
+    subscriptionRef.current = supabase
+      .channel(`unread-messages-${userId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'chat_messages' },
+        (payload: any) => {
+          if (payload.new?.receiver_id === userId && !payload.new.is_read) {
+            setUnreadCount((prev) => prev + 1)
+          }
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
+        (payload: any) => {
+          if (payload.new) {
+            setNotifCount((prev) => prev + 1)
+            setNotifs((prev) => [payload.new as NotifRow, ...prev])
+          }
+        },
+      )
+      .subscribe()
+  }, [supabase])
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadUserData = async (userId: string) => {
+      // FIX #6: Wrap in try/catch with proper error handling
+      try {
+        const [msgResult, notifResult] = await Promise.all([
+          supabase
+            .from('chat_messages')
+            .select('*, conversation:conversations!chat_messages_conversation_id_fkey(status)', { count: 'exact', head: true })
+            .eq('receiver_id', userId)
+            .eq('is_read', false)
+            .neq('conversation.status', 'completed'),
+          supabase
+            .from('notifications')
+            .select('*', { count: 'exact' })
+            .eq('user_id', userId)
+            .eq('is_read', false)
+            .order('created_at', { ascending: false })
+            .limit(10),
+        ])
+
+        if (!isMounted) return
+
+        if (msgResult.error) console.error('Failed to load messages:', msgResult.error)
+        else setUnreadCount(msgResult.count ?? 0)
+
+        if (notifResult.error) console.error('Failed to load notifications:', notifResult.error)
+        else {
+          setNotifCount(notifResult.count ?? 0)
+          setNotifs((notifResult.data as NotifRow[]) ?? [])
+        }
+      } catch (err) {
+        console.error('Unexpected error loading user data:', err)
+      }
+    }
+
+    // FIX #1: Auth subscription created once on mount only (not on every pathname change)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
+      if (!isMounted) return
+      const currentUser = session?.user ?? null
+      setUser(currentUser)
 
-    const loadUserAndMessages = async () => {
-      const { data: { user: cu } } = await supabase.auth.getUser()
-      setUser(cu)
-      setCurrentUser(cu)
-
-      if (!cu) {
+      if (currentUser) {
+        loadUserData(currentUser.id)
+        setupRealtimeChannel(currentUser.id)
+      } else {
+        // Logged out — clear all state and tear down channel
         setUnreadCount(0)
         setNotifCount(0)
         setNotifs([])
-        return
+        if (subscriptionRef.current) {
+          supabase.removeChannel(subscriptionRef.current)
+          subscriptionRef.current = null
+        }
       }
+    })
 
-      const { count: msgCount } = await supabase
-        .from('chat_messages')
-        .select('*, conversation:conversations!chat_messages_conversation_id_fkey(status)', { count: 'exact', head: true })
-        .eq('receiver_id', cu.id)
-        .eq('is_read', false)
-        .neq('conversation.status', 'completed')
-
-      setUnreadCount(msgCount || 0)
-
-      const { data: notifData, count: nCount } = await supabase
-        .from('notifications')
-        .select('*', { count: 'exact' })
-        .eq('user_id', cu.id)
-        .eq('is_read', false)
-        .order('created_at', { ascending: false })
-        .limit(10)
-
-      setNotifCount(nCount || 0)
-      setNotifs(notifData || [])
-
-      if (subscriptionRef.current) supabase.removeChannel(subscriptionRef.current)
-
-      subscriptionRef.current = supabase
-        .channel(`unread-messages-${cu.id}`)
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'chat_messages' },
-          (payload) => {
-            if (payload.new && payload.new.receiver_id === cu.id && !payload.new.is_read) {
-              setUnreadCount((prev) => prev + 1)
-            }
-          },
-        )
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${cu.id}` },
-          (payload) => {
-            if (payload.new) {
-              setNotifCount((prev) => prev + 1)
-              setNotifs((prev) => [payload.new, ...prev])
-            }
-          },
-        )
-        .subscribe()
-    }
-
-    loadUserAndMessages()
+    // Seed initial user without waiting for an auth event
+    supabase.auth.getUser().then(({ data: { user: cu } }) => {
+      if (!isMounted || !cu) return
+      setUser(cu)
+      loadUserData(cu.id)
+      setupRealtimeChannel(cu.id)
+    })
 
     return () => {
+      isMounted = false
       subscription.unsubscribe()
+      // FIX #3: Guaranteed channel cleanup on unmount
       if (subscriptionRef.current) {
         supabase.removeChannel(subscriptionRef.current)
         subscriptionRef.current = null
       }
     }
-  }, [pathname])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Run once on mount only
 
   return (
     <header className="bg-white shadow-md border-b border-stone-100 sticky top-0" style={{ zIndex: 9000 }}>
@@ -568,7 +631,8 @@ function SiteHeaderInner() {
                   <MessageIcon />
                 </IconLink>
 
-                <div className="relative">
+                {/* FIX #4: Notification dropdown with outside-click ref */}
+                <div className="relative" ref={notifRef}>
                   <button
                     onClick={() => setShowNotifs((v) => !v)}
                     className="relative inline-flex items-center justify-center w-9 h-9 rounded-full text-stone-700 hover:text-[#FF5722] hover:bg-stone-100 transition-colors"
@@ -582,14 +646,17 @@ function SiteHeaderInner() {
                   </button>
 
                   {showNotifs && (
-                    <div className="absolute right-0 mt-2 w-80 bg-white border border-stone-200 rounded-2xl shadow-xl overflow-hidden" style={{ zIndex: 9999 }}>
+                    <div
+                      className="absolute right-0 mt-2 w-80 bg-white border border-stone-200 rounded-2xl shadow-xl overflow-hidden"
+                      style={{ zIndex: 9999 }}
+                    >
                       <div className="px-4 py-3 border-b border-stone-100 flex items-center justify-between">
                         <p className="font-semibold text-sm">Notifications</p>
                         {notifCount > 0 && (
                           <button
                             onClick={async () => {
-                              if (!currentUser) return
-                              await supabase.from('notifications').update({ is_read: true }).eq('user_id', currentUser.id)
+                              if (!user) return
+                              await supabase.from('notifications').update({ is_read: true }).eq('user_id', user.id)
                               setNotifCount(0)
                               setNotifs([])
                               setShowNotifs(false)

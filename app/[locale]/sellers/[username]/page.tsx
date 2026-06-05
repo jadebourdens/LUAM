@@ -12,6 +12,7 @@ export async function generateMetadata({ params }: Props) {
   const { username } = await params
   const supabase = await createClient()
   const { data: seller } = await supabase
+  
     .from('profiles')
     .select('username, full_name, brand_name, bio, avatar_url')
     .eq('username', username)
@@ -72,13 +73,14 @@ export default async function SellerPage({ params }: Props) {
       ).values()]
     : []
 
+    
   return (
     <SellerStorefront
       seller={seller}
       listings={listings || []}
       reviews={reviews || []}
       categories={categories as any[]}
-      locale={params.locale}
+      locale={locale}
     />
   )
 }

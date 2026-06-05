@@ -117,11 +117,11 @@ export default function SellerStorefront({ seller, listings, reviews, categories
             {/* Contact CTA */}
             <div className="shrink-0">
               <Link
-                href={`/${locale}/messages`}
-                className="inline-flex items-center gap-2 bg-stone-900 text-white text-sm font-semibold px-5 py-2.5 rounded-full hover:bg-stone-700 transition-colors"
-              >
-                Contact seller
-              </Link>
+  href={`/${locale || 'en'}/messages`}
+  className="inline-flex items-center gap-2 bg-stone-900 text-white text-sm font-semibold px-5 py-2.5 rounded-full hover:bg-stone-700 transition-colors"
+>
+  Contact seller
+</Link>
             </div>
           </div>
         </div>

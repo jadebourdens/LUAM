@@ -128,7 +128,7 @@ export default async function Home({
 
         {pagedListings.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {pagedListings.map((listing, i) => {
+            {pagedListings.map((listing, index) => {
               const firstImage = [...(listing.images ?? [])]
                 .sort((a, b) => a.position - b.position)[0]?.image_url
               const price = listing.currency === 'EUR'
@@ -147,9 +147,10 @@ export default async function Home({
                             src={firstImage}
                             alt={listing.title}
                             fill
-                            priority={i === 0}
                             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
                             className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            priority={index === 0}
+                            loading={index === 0 ? undefined : 'lazy'}
                           />
                           {listing.status === 'sold' && (
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">

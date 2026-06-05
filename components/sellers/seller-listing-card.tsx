@@ -43,12 +43,14 @@ function formatPrice(listing: Listing): string {
 export default function SellerListingCard({ listing, locale, viewMode }: Props) {
   const coverImage = listing.images?.[0]?.image_url
   const price = formatPrice(listing)
-  const safeLocale = locale || 'en' // fallback to prevent // path
+  
+  // Refactored Link href for locale safety
+  const href = `/${locale || 'en'}/listings/${listing?.id || ''}`
 
   if (viewMode === 'list') {
     return (
       <Link
-        href={`/${safeLocale}/listings/${listing.id}`}
+        href={href}
         className="flex items-center gap-4 bg-white rounded-2xl p-3 border border-stone-100 hover:border-stone-300 hover:shadow-sm transition-all group"
       >
         <div className="relative w-20 h-20 shrink-0 rounded-xl overflow-hidden bg-stone-100">
@@ -65,7 +67,7 @@ export default function SellerListingCard({ listing, locale, viewMode }: Props) 
               {CONDITION_LABELS[listing.condition]}
             </span>
           )}
-          {listing.size && <p className=\"text-xs text-stone-400 mt-1\">Size: {listing.size}</p>}
+          {listing.size && <p className="text-xs text-stone-400 mt-1">Size: {listing.size}</p>}
         </div>
         <div className="shrink-0 font-bold text-stone-900">{price}</div>
       </Link>
@@ -75,10 +77,9 @@ export default function SellerListingCard({ listing, locale, viewMode }: Props) 
   // Grid mode
   return (
     <Link
-      href={`/${safeLocale}/listings/${listing.id}`}
+      href={href}
       className="group block bg-white rounded-2xl overflow-hidden border border-stone-100 hover:border-stone-300 hover:shadow-md transition-all duration-200"
     >
-      {/* Image Container */}
       <div className="relative aspect-[3/4] bg-stone-100 overflow-hidden">
         {coverImage ? (
           <Image
@@ -91,7 +92,7 @@ export default function SellerListingCard({ listing, locale, viewMode }: Props) 
           <div className="w-full h-full flex items-center justify-center text-stone-300 text-4xl">📦</div>
         )}
         
-        {/* Condition Tag */}
+        {/* Condition Tag: z-10 for proper layering */}
         {listing.condition && (
           <div className="absolute top-2 left-2 z-10">
             <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${CONDITION_COLORS[listing.condition]}`}>
@@ -100,7 +101,7 @@ export default function SellerListingCard({ listing, locale, viewMode }: Props) 
           </div>
         )}
 
-        {/* Heart Icon - Change button to div with stopPropagation to fix Link nesting */}
+        {/* Heart Icon: <div> role="button" with z-20 and event stopPropagation */}
         <div 
           role="button"
           tabIndex={0}
@@ -115,7 +116,6 @@ export default function SellerListingCard({ listing, locale, viewMode }: Props) 
         </div>
       </div>
 
-      {/* Info */}
       <div className="p-3">
         <p className="text-sm font-medium text-stone-800 truncate leading-snug">{listing.title}</p>
         {listing.size && (
