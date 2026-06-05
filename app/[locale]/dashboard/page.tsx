@@ -22,7 +22,7 @@ export default async function DashboardPage({ params }: Props) {
 
   if (!profile) redirect('/login')
 
-  // Fetch seller's ALL listings (including drafts, not just active)
+  // Fetch seller's listings (excluding deleted)
   const { data: listings } = await supabase
     .from('listings')
     .select(`
@@ -31,6 +31,7 @@ export default async function DashboardPage({ params }: Props) {
       category:categories(id, name, slug)
     `)
     .eq('seller_id', profile.id)
+    .neq('status', 'deleted')
     .order('created_at', { ascending: false })
 
   // Fetch seller's reviews

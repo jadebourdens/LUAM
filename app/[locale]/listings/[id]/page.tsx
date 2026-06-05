@@ -282,7 +282,7 @@ export default function ListingDetailPage() {
               {isSeller ? (
                 <div className="flex gap-2">
                   <Link href={`/${locale}/listings/${listing.id}/edit`} className="flex-1 py-2 text-center rounded border text-sm">Modify</Link>
-                  <DeleteListingButton listingId={listing.id} title={listing.title} redirectTo={`/${locale}`} className="flex-1 py-2 text-center border border-red-200 text-red-600 text-sm" />
+                  <DeleteListingButton listingId={listing.id} title={listing.title} redirectTo={`/${locale}/dashboard`} className="flex-1 py-2 text-center border border-red-200 text-red-600 text-sm" />
                 </div>
               ) : user ? (
                 <>
