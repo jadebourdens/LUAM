@@ -512,8 +512,7 @@ export default function MessagesPage() {
                         disabled={statusUpdating}
                         className="flex-1 min-w-fit px-4 py-3 rounded-xl bg-green-600 text-white font-semibold text-sm hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                       >
-                        {statusUpdating ? '...' : t('accept_offer')}
-                      </button>
+                    {statusUpdating ? '...' : '✅ Accept Offer'}                      </button>
                     )}
                     {showTransferredBtn && (
                       <button

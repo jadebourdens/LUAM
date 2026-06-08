@@ -22,10 +22,9 @@ type ListingData = {
   id: string
   title: string
   description?: string
-  currency: 'USD' | 'VND' | 'EUR'
+  currency: 'USD' | 'VND'
   price_usd?: number
   price_vnd?: number
-  price_eur?: number
   brand?: string
   color?: string
   size?: string
@@ -51,13 +50,11 @@ type RelatedListing = {
   title: string
   price_usd?: number
   price_vnd?: number
-  price_eur?: number
-  currency: 'USD' | 'VND' | 'EUR'
+  currency: 'USD' | 'VND'
   images?: { image_url: string; position: number }[]
 }
 
 function formatPrice(listing: ListingData | RelatedListing): string {
-  if (listing.currency === 'EUR') return `€${listing.price_eur ?? ''}`
   if (listing.currency === 'USD') return `$${listing.price_usd ?? ''}`
   if (listing.currency === 'VND') return `${listing.price_vnd?.toLocaleString()} ₫`
   return ''
@@ -142,7 +139,7 @@ export default function ListingDetailPage() {
       if (data?.seller_id) {
         const { data: boutique } = await supabase
           .from('listings')
-          .select('id, title, price_usd, price_vnd, price_eur, currency, images:listing_images(image_url, position)')
+          .select('id, title, price_usd, price_vnd, currency, images:listing_images(image_url, position)')
           .eq('seller_id', data.seller_id)
           .eq('status', 'active')
           .neq('id', id)
@@ -154,7 +151,7 @@ export default function ListingDetailPage() {
       if (data?.category?.slug) {
         const { data: similar } = await supabase
           .from('listings')
-          .select('id, title, price_usd, price_vnd, price_eur, currency, images:listing_images(image_url, position)')
+          .select('id, title, price_usd, price_vnd, currency, images:listing_images(image_url, position)')
           .eq('status', 'active')
           .neq('id', id)
           .neq('seller_id', data.seller_id)

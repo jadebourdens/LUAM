@@ -132,15 +132,15 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
   const [error, setError] = useState<string | null>(null)
 
   const [form, setForm] = useState({
-    title: initialData?.title || '',
-    description: initialData?.description || '',
-    price: (initialData?.price_usd || initialData?.price_vnd || '').toString(),
-    currency: initialData?.currency || 'USD' as Currency,
-    category_id: initialData?.category_id || '',
-    condition: initialData?.condition || 'good' as ListingCondition,
-    size: initialData?.size || '',
-    color: initialData?.color || '',
-  })
+  title: initialData?.title || '',
+  description: initialData?.description || '',
+  price: (initialData?.price_usd || initialData?.price_vnd || '').toString(),
+  currency: initialData?.currency || 'USD' as Currency,
+  category_id: initialData?.category_id || '',
+  condition: initialData?.condition || 'good' as ListingCondition,
+  sizes: (initialData?.sizes ?? []) as string[],   // ← was: size: ''
+  color: initialData?.color || '',
+})
 
   const getAvailableSizes = () => {
     if (!form.category_id) return []
@@ -257,19 +257,28 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
       if (isNaN(priceNum) || priceNum <= 0) {
         throw new Error('Price must be a positive number')
       }
-      
+     
+      const [exchangeRate, setExchangeRate] = useState(26300)
+      useEffect(() => {
+      fetch('https://open.er-api.com/v6/latest/USD')
+     .then(res => res.json())
+     .then(data => {
+      if (data?.rates?.VND) setExchangeRate(data.rates.VND)
+       })
+       .catch(() => {})
+      }, [])
+
       const payload = {
-        title: form.title,
-        description: form.description,
-        currency: form.currency,
-        condition: form.condition,
-        category_id: form.category_id || null,
-        size: form.size || null,
-        color: form.color || null,
-        brand: selectedBrand || null,
-        price_usd: form.currency === 'USD' ? priceNum : priceNum / 25000,
-        price_vnd: form.currency === 'VND' ? priceNum : priceNum * 25000,
-      }
+  title: form.title,
+  description: form.description,
+  currency: form.currency,
+  condition: form.condition,
+  category_id: form.category_id || null,
+  color: form.color || null,
+  brand: selectedBrand || null,
+  price_usd: form.currency === 'USD' ? priceNum : priceNum / exchangeRate,  // ← changed
+  price_vnd: form.currency === 'VND' ? priceNum : priceNum * exchangeRate,  // ← changed
+}
 
       if (initialData) {
         const { error } = await supabase
@@ -423,7 +432,6 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
                   >
                     <option value="USD">USD</option>
                     <option value="VND">VND</option>
-                    <option value="EUR">EUR</option>
                   </select>
                 </div>
               </div>
@@ -484,20 +492,40 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
                     ))}
                   </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Size</label>
-                  <select
-                    value={form.size}
-                    onChange={(e) => setForm({ ...form, size: e.target.value })}
-                    disabled={!form.category_id}
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors cursor-pointer disabled:bg-gray-100 disabled:text-gray-400"
-                  >
-                    <option value="">Select size</option>
-                    {availableSizes.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </div>
+               <div>
+  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+    Sizes available
+    {!form.category_id && <span className="text-gray-400 font-normal ml-1">(select a category first)</span>}
+  </label>
+  {availableSizes.length > 0 ? (
+    <div className="flex flex-wrap gap-2">
+      {availableSizes.map((s) => {
+        const selected = form.sizes.includes(s)
+        return (
+          <button
+            key={s}
+            type="button"
+            onClick={() => setForm(prev => ({
+              ...prev,
+              sizes: selected
+                ? prev.sizes.filter(x => x !== s)
+                : [...prev.sizes, s]
+            }))}
+            className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+              selected
+                ? 'bg-[#FF5722] text-white border-[#FF5722]'
+                : 'bg-white text-gray-700 border-gray-300 hover:border-[#FF5722]'
+            }`}
+          >
+            {s}
+          </button>
+        )
+      })}
+    </div>
+  ) : (
+    <div className="text-sm text-gray-400 py-2">—</div>
+  )}
+</div>
               </div>
 
               <div>

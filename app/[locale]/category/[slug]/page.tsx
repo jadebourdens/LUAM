@@ -10,7 +10,6 @@ interface Listing {
   id: string
   title: string
   description: string | null
-  price_eur: number | null
   price_usd: number | null
   price_vnd: number | null
   currency: string | null
@@ -24,9 +23,7 @@ function formatPrice(listing: Listing, locale: string) {
   if (locale === 'vi' && listing.price_vnd) {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(listing.price_vnd)
   }
-  if (listing.price_eur) {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(listing.price_eur)
-  }
+
   if (listing.price_usd) {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(listing.price_usd)
   }
@@ -56,15 +53,22 @@ export default async function CategoryPage({ params }: Props) {
 
   if (!category) notFound()
 
-   const { data: listings } = await supabase
-    .from('listings')
-    .select(`
-      id, title, description, price_eur, price_usd, price_vnd, currency, condition, brand, size,
-      listing_images (image_url, position)
-    `)
-    .eq('category_id', category.id)
-    .eq('status', 'active')
-    .order('created_at', { ascending: false })
+   const { data: subcategories } = await supabase
+  .from('categories')
+  .select('id')
+  .eq('parent_id', category.id)
+
+const categoryIds = [category.id, ...(subcategories?.map(c => c.id) ?? [])]
+
+const { data: listings } = await supabase
+  .from('listings')
+  .select(`
+    id, title, description, price_eur, price_usd, price_vnd, currency, condition, brand, size,
+    listing_images (image_url, position)
+  `)
+  .in('category_id', categoryIds)
+  .eq('status', 'active')
+  .order('created_at', { ascending: false })
 
   const displaySlug = slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 
