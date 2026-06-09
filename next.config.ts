@@ -5,7 +5,7 @@ const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
 const nextConfig: NextConfig = {
   eslint: {
-    ignoreDuringBuilds: true,  // ← add this
+    ignoreDuringBuilds: true,
   },
   images: {
     remotePatterns: [
@@ -14,9 +14,6 @@ const nextConfig: NextConfig = {
         hostname: 'vmzwbevbzmslsyhxssjh.supabase.co',
       },
     ],
-  },
-  turbopack: {
-    root: __dirname,
   },
 };
 
