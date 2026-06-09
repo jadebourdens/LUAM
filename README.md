@@ -1,6 +1,6 @@
 # Luam - Marketplace Platform
 
-A full-featured marketplace platform like Vinted, built with Next.js, Supabase, and Stripe Connect. Supports multi-currency transactions (EUR, USD, VND) with automatic 5% platform fee.
+A full-featured marketplace platform, built with Next.js, Supabase, and Stripe Connect.
 
 ## Features
 
