@@ -15,26 +15,11 @@ interface ImageModalProps {
 }
 
 export default function ImageModal({
-  image,
-  title,
-  isOpen,
-  onClose,
-  onNext,
-  onPrev,
-  currentIndex,
-  totalImages,
+  image, title, isOpen, onClose, onNext, onPrev, currentIndex, totalImages,
 }: ImageModalProps) {
-  const [isZoomed, setIsZoomed] = useState(false)
-
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = 'unset'
-    }
-    return () => {
-      document.body.style.overflow = 'unset'
-    }
+    document.body.style.overflow = isOpen ? 'hidden' : 'unset'
+    return () => { document.body.style.overflow = 'unset' }
   }, [isOpen])
 
   useEffect(() => {
@@ -44,7 +29,6 @@ export default function ImageModal({
       if (e.key === 'ArrowRight') onNext()
       if (e.key === 'ArrowLeft') onPrev()
     }
-
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, onClose, onNext, onPrev])
@@ -52,64 +36,52 @@ export default function ImageModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
-      {/* Close button */}
-      <button
-        onClick={onClose}
-        className="absolute top-4 right-4 text-white hover:text-gray-300 text-3xl font-bold z-10"
-      >
-        ✕
-      </button>
+<div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-8 pt-20" onClick={onClose}>
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
-      {/* Main image container */}
-      <div className="relative w-full h-full flex items-center justify-center max-w-4xl">
-        <div
-          className="relative w-full aspect-square cursor-zoom-in"
-          onClick={() => setIsZoomed(!isZoomed)}
-        >
+      {/* Modal card */}
+      // REPLACE WITH:
+<div
+ className="relative bg-white rounded-2xl overflow-hidden shadow-2xl w-full max-w-3xl flex flex-col"
+style={{ maxHeight: '85vh' }}
+  onClick={(e) => e.stopPropagation()}
+>
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <p className="text-sm font-semibold text-gray-700 truncate">{title}</p>
+          <div className="flex items-center gap-3">
+            {totalImages > 1 && (
+              <span className="text-xs text-gray-400">{currentIndex + 1} / {totalImages}</span>
+            )}
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-xl font-bold transition-colors">✕</button>
+          </div>
+        </div>
+
+        {/* Image */}
+<div className="relative bg-gray-50" style={{ height: '65vh' }}>
           <Image
             src={image.image_url}
             alt={`${title} - Full size`}
             fill
-            sizes="90vw"
-            className={`object-contain transition-transform ${
-              isZoomed ? 'scale-150' : 'scale-100'
-            }`}
+            sizes="(max-width: 768px) 100vw, 672px"
+            className="object-contain"
             priority
           />
         </div>
-      </div>
 
-      {/* Navigation arrows */}
-      {totalImages > 1 && (
-        <>
-          <button
-            onClick={onPrev}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 text-4xl font-bold z-10 p-2"
-            aria-label="Previous image"
-          >
-            ‹
-          </button>
-          <button
-            onClick={onNext}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 text-4xl font-bold z-10 p-2"
-            aria-label="Next image"
-          >
-            ›
-          </button>
-        </>
-      )}
-
-      {/* Image counter */}
-      {totalImages > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full text-sm font-medium">
-          {currentIndex + 1} / {totalImages}
-        </div>
-      )}
-
-      {/* Zoom hint */}
-      <div className="absolute bottom-4 right-4 text-white text-xs bg-black/60 px-3 py-2 rounded">
-        Click to {isZoomed ? 'zoom out' : 'zoom in'}
+        {/* Navigation */}
+        {totalImages > 1 && (
+          <div className="flex items-center justify-center gap-4 px-4 py-3 border-t border-gray-100">
+            <button onClick={onPrev} className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 hover:text-[#FF5722] transition-colors text-lg">‹</button>
+            <div className="flex gap-1.5">
+              {Array.from({ length: totalImages }).map((_, i) => (
+                <div key={i} className={`w-1.5 h-1.5 rounded-full transition-colors ${i === currentIndex ? 'bg-[#FF5722]' : 'bg-gray-300'}`} />
+              ))}
+            </div>
+            <button onClick={onNext} className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 hover:text-[#FF5722] transition-colors text-lg">›</button>
+          </div>
+        )}
       </div>
     </div>
   )
