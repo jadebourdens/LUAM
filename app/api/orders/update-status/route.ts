@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 
     const { data: order, error } = await supabase
       .from('orders')
-      .select('id, buyer_id, seller_id, status')
+      .select('id, buyer_id, seller_id, status, tracking_number, listing:listings(title)')
       .eq('id', orderId)
       .single()
 
@@ -35,6 +35,31 @@ export async function POST(req: Request) {
         .eq('id', orderId)
 
       if (updateError) return NextResponse.json({ error: updateError.message }, { status: 400 })
+
+      // Send shipping email to buyer
+      try {
+        const { data: buyerAuth } = await supabase.auth.admin.getUserById(order.buyer_id)
+        const { data: buyer } = await supabase.from('profiles').select('full_name').eq('id', order.buyer_id).single()
+        const buyerEmail = buyerAuth?.user?.email || ''
+
+        const { resend } = await import('@/lib/resend')
+        const { OrderShippedEmail } = await import('@/lib/emails/order-shipped')
+
+        await resend.emails.send({
+          from: 'Luam Marketplace <onboarding@resend.dev>',
+          to: buyerEmail,
+          subject: `Your order has been shipped — ${(order.listing as any)?.title}`,
+          react: OrderShippedEmail({
+            buyerName: buyer?.full_name || 'there',
+            listingTitle: (order.listing as any)?.title || 'Your item',
+            trackingNumber: cleanTracking,
+            orderId: order.id,
+          }),
+        })
+      } catch (e) {
+        console.error('Shipping email failed:', e)
+      }
+
       return NextResponse.json({ ok: true })
     }
 

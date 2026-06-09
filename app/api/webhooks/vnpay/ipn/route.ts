@@ -35,7 +35,7 @@ export async function GET(req: Request) {
   const supabase = serviceClient()
   const { data: order } = await supabase
     .from('orders')
-    .select('id, amount, status, currency')
+    .select('id, amount, status, currency, listing_id')
     .eq('id', orderId)
     .single()
 
@@ -60,6 +60,12 @@ export async function GET(req: Request) {
       .update({ status: 'paid' })
       .eq('id', orderId)
       .eq('status', 'pending')
+
+    // Mark listing as sold
+    await supabase
+      .from('listings')
+      .update({ status: 'sold' })
+      .eq('id', order.listing_id)
   } else {
     await supabase
       .from('orders')
