@@ -9,7 +9,8 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: Props) {
-  const { username } = await params
+  const { username: rawUsername } = await params
+  const username = decodeURIComponent(rawUsername)
   const supabase = await createClient()
   const { data: seller } = await supabase
   
@@ -30,7 +31,8 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function SellerPage({ params }: Props) {
-  const { username, locale } = await params
+  const { username: rawUsername, locale } = await params
+  const username = decodeURIComponent(rawUsername)
   const supabase = await createClient()
   const t = await getTranslations('sellers')
   const { data: seller } = await supabase

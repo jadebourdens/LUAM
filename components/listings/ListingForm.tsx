@@ -130,17 +130,27 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [priceDisplay, setPriceDisplay] = useState(
+  initialData?.price_vnd
+    ? initialData.price_vnd.toLocaleString('vi-VN')
+    : initialData?.price_usd
+    ? initialData.price_usd.toLocaleString('en-US')
+    : ''
+)
+
+  // ✅ FIXED: moved here from inside handleSubmit
+  const [exchangeRate, setExchangeRate] = useState(26300)
 
   const [form, setForm] = useState({
-  title: initialData?.title || '',
-  description: initialData?.description || '',
-  price: (initialData?.price_usd || initialData?.price_vnd || '').toString(),
-  currency: initialData?.currency || 'USD' as Currency,
-  category_id: initialData?.category_id || '',
-  condition: initialData?.condition || 'good' as ListingCondition,
-  sizes: (initialData?.sizes ?? []) as string[],   // ← was: size: ''
-  color: initialData?.color || '',
-})
+    title: initialData?.title || '',
+    description: initialData?.description || '',
+    price: (initialData?.price_usd || initialData?.price_vnd || '').toString(),
+    currency: initialData?.currency || 'VND' as Currency,
+    category_id: initialData?.category_id || '',
+    condition: initialData?.condition || 'good' as ListingCondition,
+    sizes: (initialData?.sizes ?? []) as string[],
+    color: initialData?.color || '',
+  })
 
   const getAvailableSizes = () => {
     if (!form.category_id) return []
@@ -158,6 +168,16 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
     supabase.from('brands').select('name').order('usage_count', { ascending: false }).limit(50).then(({ data }) => {
       if (data) setBrands(data.map((b) => b.name))
     })
+  }, [])
+
+  // ✅ FIXED: moved here from inside handleSubmit
+  useEffect(() => {
+    fetch('https://open.er-api.com/v6/latest/USD')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.rates?.VND) setExchangeRate(data.rates.VND)
+      })
+      .catch(() => {})
   }, [])
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -253,32 +273,22 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
     try {
       const priceNum = parseFloat(form.price)
       
-      // Price validation: must be positive number
       if (isNaN(priceNum) || priceNum <= 0) {
         throw new Error('Price must be a positive number')
       }
-     
-      const [exchangeRate, setExchangeRate] = useState(26300)
-      useEffect(() => {
-      fetch('https://open.er-api.com/v6/latest/USD')
-     .then(res => res.json())
-     .then(data => {
-      if (data?.rates?.VND) setExchangeRate(data.rates.VND)
-       })
-       .catch(() => {})
-      }, [])
 
+      // ✅ exchangeRate is now from component state — no hooks needed here
       const payload = {
-  title: form.title,
-  description: form.description,
-  currency: form.currency,
-  condition: form.condition,
-  category_id: form.category_id || null,
-  color: form.color || null,
-  brand: selectedBrand || null,
-  price_usd: form.currency === 'USD' ? priceNum : priceNum / exchangeRate,  // ← changed
-  price_vnd: form.currency === 'VND' ? priceNum : priceNum * exchangeRate,  // ← changed
-}
+        title: form.title,
+        description: form.description,
+        currency: form.currency,
+        condition: form.condition,
+        category_id: form.category_id || null,
+        color: form.color || null,
+        brand: selectedBrand || null,
+        price_usd: form.currency === 'USD' ? priceNum : priceNum / exchangeRate,
+        price_vnd: form.currency === 'VND' ? priceNum : priceNum * exchangeRate,
+      }
 
       if (initialData) {
         const { error } = await supabase
@@ -288,7 +298,6 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
 
         if (error) throw error
 
-        // Handle image updates atomically: verify delete before insert
         if (uploadedUrls.length > 0) {
           const existingImageIds = initialData.images?.map((img: any) => img.id) || []
           
@@ -303,7 +312,6 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
             }
           }
 
-          // Insert new images only after successful delete
           for (let i = 0; i < uploadedUrls.length; i++) {
             const { error: insertError } = await supabase
               .from('listing_images')
@@ -332,7 +340,6 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
 
         if (error) throw error
 
-        // Insert images with error handling
         if (uploadedUrls.length > 0) {
           for (let i = 0; i < uploadedUrls.length; i++) {
             const { error: insertError } = await supabase
@@ -415,24 +422,30 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Price *</label>
                   <input
-                    type="number"
-                    required
-                    value={form.price}
-                    onChange={(e) => setForm({ ...form, price: e.target.value })}
-                    placeholder="0.00"
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors"
-                  />
+  type="text"
+  required
+  value={priceDisplay}
+  onChange={(e) => {
+    const raw = e.target.value.replace(/[^0-9]/g, '')
+    const num = raw === '' ? '' : parseInt(raw, 10)
+    setPriceDisplay(num === '' ? '' : Number(num).toLocaleString('vi-VN'))
+    setForm({ ...form, price: num.toString() })
+  }}
+  placeholder="0"
+  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors"
+/>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Currency *</label>
-                  <select
-                    value={form.currency}
-                    onChange={(e) => setForm({ ...form, currency: e.target.value as Currency })}
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors cursor-pointer"
-                  >
-                    <option value="USD">USD</option>
-                    <option value="VND">VND</option>
-                  </select>
+                  
+<select
+  value={form.currency}
+  onChange={(e) => setForm({ ...form, currency: e.target.value as Currency })}
+  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors cursor-pointer"
+>
+  <option value="VND">VND</option>
+  <option value="USD">USD</option>
+</select>
                 </div>
               </div>
             </div>
@@ -492,40 +505,40 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
                     ))}
                   </select>
                 </div>
-               <div>
-  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-    Sizes available
-    {!form.category_id && <span className="text-gray-400 font-normal ml-1">(select a category first)</span>}
-  </label>
-  {availableSizes.length > 0 ? (
-    <div className="flex flex-wrap gap-2">
-      {availableSizes.map((s) => {
-        const selected = form.sizes.includes(s)
-        return (
-          <button
-            key={s}
-            type="button"
-            onClick={() => setForm(prev => ({
-              ...prev,
-              sizes: selected
-                ? prev.sizes.filter(x => x !== s)
-                : [...prev.sizes, s]
-            }))}
-            className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
-              selected
-                ? 'bg-[#FF5722] text-white border-[#FF5722]'
-                : 'bg-white text-gray-700 border-gray-300 hover:border-[#FF5722]'
-            }`}
-          >
-            {s}
-          </button>
-        )
-      })}
-    </div>
-  ) : (
-    <div className="text-sm text-gray-400 py-2">—</div>
-  )}
-</div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Sizes available
+                    {!form.category_id && <span className="text-gray-400 font-normal ml-1">(select a category first)</span>}
+                  </label>
+                  {availableSizes.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {availableSizes.map((s) => {
+                        const selected = form.sizes.includes(s)
+                        return (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => setForm(prev => ({
+                              ...prev,
+                              sizes: selected
+                                ? prev.sizes.filter(x => x !== s)
+                                : [...prev.sizes, s]
+                            }))}
+                            className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                              selected
+                                ? 'bg-[#FF5722] text-white border-[#FF5722]'
+                                : 'bg-white text-gray-700 border-gray-300 hover:border-[#FF5722]'
+                            }`}
+                          >
+                            {s}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-400 py-2">—</div>
+                  )}
+                </div>
               </div>
 
               <div>

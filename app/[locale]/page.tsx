@@ -3,6 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import FavoriteHeart from '@/components/favorite-heart'
 import { getTranslations } from 'next-intl/server'
+import { formatPrice } from '@/lib/format-price'
 
 export default async function Home({
   params,
@@ -131,11 +132,9 @@ export default async function Home({
             {pagedListings.map((listing, index) => {
               const firstImage = [...(listing.images ?? [])]
                 .sort((a, b) => a.position - b.position)[0]?.image_url
-              const price = listing.currency === 'EUR'
-                ? `€${listing.price_eur}`
-                : listing.currency === 'USD'
-                ? `$${listing.price_usd}`
-                : `${listing.price_vnd?.toLocaleString()} ₫`
+              
+                const price = formatPrice(listing)
+
               const description = listing.description || ''
               return (
                 <div key={listing.id} className="bg-white border border-stone-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group">

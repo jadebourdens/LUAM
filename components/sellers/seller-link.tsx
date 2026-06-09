@@ -17,7 +17,7 @@ export default function SellerLink({ seller, locale, className = '' }: Props) {
 
   return (
     <Link
-      href={`/${locale}/sellers/${seller.username}`}
+      href={`/${locale}/sellers/${encodeURIComponent(seller.username)}`}
       className={`text-sm font-semibold tracking-wide uppercase hover:underline underline-offset-2 transition-colors text-stone-500 hover:text-stone-900 ${className}`}
     >
       {displayName}

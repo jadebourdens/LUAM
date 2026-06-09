@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Listing } from '@/types/database'
 import { Heart } from 'lucide-react'
+import { formatPrice } from '@/lib/format-price'
 
 interface Props {
   listing: Listing
@@ -29,16 +30,6 @@ const CONDITION_COLORS: Record<string, string> = {
   worn: 'bg-red-50 text-red-700',
 }
 
-function formatPrice(listing: Listing): string {
-  const { currency, price_eur, price_usd, price_vnd } = listing
-  if (currency === 'EUR' && price_eur != null)
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(price_eur)
-  if (currency === 'USD' && price_usd != null)
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price_usd)
-  if (currency === 'VND' && price_vnd != null)
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price_vnd)
-  return '—'
-}
 
 export default function SellerListingCard({ listing, locale, viewMode }: Props) {
   const coverImage = listing.images?.[0]?.image_url

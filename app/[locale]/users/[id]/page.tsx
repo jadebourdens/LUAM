@@ -55,13 +55,14 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
               <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden relative mb-2">
                 {item.images?.[0] && (
                   <Image 
-                    src={item.images[0].image_url} 
+                   src={item.images[0].image_url} 
                     fill 
                     sizes="(max-width: 768px) 50vw, 25vw" 
                     priority={index < 4}
+                    loading={index === 0 ? "eager" : "lazy"}
                     className="object-cover" 
                     alt={item.title} 
-                  />
+/>
                 )}
               </div>
               <h3 className="font-medium text-sm truncate">{item.title}</h3>

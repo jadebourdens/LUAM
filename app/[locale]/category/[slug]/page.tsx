@@ -19,11 +19,10 @@ interface Listing {
   listing_images: { image_url: string; position: number }[]
 }
 
-function formatPrice(listing: Listing, locale: string) {
-  if (locale === 'vi' && listing.price_vnd) {
+function formatPrice(listing: Listing) {
+  if (listing.price_vnd) {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(listing.price_vnd)
   }
-
   if (listing.price_usd) {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(listing.price_usd)
   }
@@ -63,7 +62,7 @@ const categoryIds = [category.id, ...(subcategories?.map(c => c.id) ?? [])]
 const { data: listings } = await supabase
   .from('listings')
   .select(`
-    id, title, description, price_eur, price_usd, price_vnd, currency, condition, brand, size,
+    id, title, description, price_usd, price_vnd, currency, condition, brand, size,
     listing_images (image_url, position)
   `)
   .in('category_id', categoryIds)
@@ -119,7 +118,7 @@ const { data: listings } = await supabase
                     </div>
                   )}
                   <div className="absolute bottom-2 left-2">
-                    <span className="bg-white/90 backdrop-blur-sm text-[#FF5722] text-xs font-bold px-2 py-1 rounded-lg shadow-sm">{formatPrice(listing, locale)}</span>
+                    <span className="bg-white/90 backdrop-blur-sm text-[#FF5722] text-xs font-bold px-2 py-1 rounded-lg shadow-sm">{formatPrice(listing)}</span>
                   </div>
                 </div>
                 <div className="p-3">

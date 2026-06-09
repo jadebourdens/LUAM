@@ -35,11 +35,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Cannot buy your own listing' }, { status: 400 })
     }
 
-    const amountMain = listing.currency === 'EUR'
-      ? Number(listing.price_eur)
-      : listing.currency === 'USD'
-      ? Number(listing.price_usd)
-      : Number(listing.price_vnd)
+    const amountMain = listing.price_vnd != null
+  ? Number(listing.price_vnd)
+  : listing.price_eur != null
+  ? Number(listing.price_eur)
+  : Number(listing.price_usd)
+
+const orderCurrency = listing.price_vnd != null ? 'VND' : listing.currency
 
     const unitAmount = toSmallestUnit(amountMain, listing.currency)
     const platformFee = calculatePlatformFee(unitAmount)
@@ -51,7 +53,7 @@ export async function POST(req: Request) {
         buyer_id: user.id,
         seller_id: listing.seller_id,
         amount: amountMain,
-        currency: listing.currency,
+        currency: orderCurrency,
         platform_fee: platformFee,
         status: 'pending',
       })
@@ -135,9 +137,9 @@ export async function POST(req: Request) {
     }
 
     if (chosenMethod === 'vnpay') {
-      if (listing.currency !== 'VND') {
-        return NextResponse.json({ error: 'VNPay supports VND listings only' }, { status: 400 })
-      }
+      if (listing.price_vnd == null) {
+  return NextResponse.json({ error: 'VNPay requires a VND price' }, { status: 400 })
+}
       try {
         const ipAddr = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1'
         const url = buildVnpayPaymentUrl({
