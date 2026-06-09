@@ -219,12 +219,40 @@ export default function ListingDetailPage() {
         <Link href={`/${locale}`} className="text-sm text-gray-500 mb-4 block hover:underline">← Back</Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-6 items-start">
-          
-          {/* Left Column: Photos + Seller + Related */}
-          <div className="space-y-6">
-            <PhotoGallery images={listing.images ?? []} title={listing.title} isSold={isSold} />
-            
-            {/* Seller Block */}
+  
+  {/* Left Column: Photos + Seller + Related */}
+  <div className="space-y-6">
+    <PhotoGallery images={listing.images ?? []} title={listing.title} isSold={isSold} />
+
+    {/* Buy block visible only on mobile — shows right after photos */}
+    <div className="lg:hidden space-y-3">
+      <h1 className="text-2xl font-bold leading-tight">{listing.title}</h1>
+      <p className="text-3xl font-bold text-[#FF5722]">{formatPrice(listing)}</p>
+      {isSold && <div className="bg-red-50 text-red-700 px-3 py-1 rounded text-xs font-bold w-fit">Item sold</div>}
+      <div className="py-2 border-y border-gray-100 text-sm space-y-1.5">
+        {specRows.map(row => (
+          <div key={row.label} className="flex justify-between"><span className="text-gray-500">{row.label}</span><span className="font-medium">{row.value}</span></div>
+        ))}
+      </div>
+      <p className="text-sm text-gray-600">{listing.description}</p>
+      <div className="pt-2 space-y-2">
+        {isSeller ? (
+          <div className="flex gap-2">
+            <Link href={`/${locale}/listings/${listing.id}/edit`} className="flex-1 py-2 text-center rounded border text-sm">Modify</Link>
+            <DeleteListingButton listingId={listing.id} title={listing.title} redirectTo={`/${locale}/dashboard`} className="flex-1 py-2 text-center border border-red-200 text-red-600 text-sm" />
+          </div>
+        ) : user ? (
+          <>
+            {!isSold && <button onClick={handleMessageSeller} className="w-full bg-[#FF5722] text-white py-3 rounded-lg font-bold text-sm">Buy Now / Message</button>}
+            <button onClick={handleToggleFavorite} className="w-full py-2.5 rounded-lg border text-sm">{isFavorited ? '★ Saved' : '☆ Save'}</button>
+          </>
+        ) : (
+          <Link href={`/${locale}/auth/login`} className="block w-full text-center bg-[#FF5722] text-white py-3 rounded-lg font-bold text-sm">Sign in to Buy</Link>
+        )}
+      </div>
+    </div>
+
+    {/* Seller Block */}
             <div className="bg-white rounded-xl p-4 border border-gray-200">
                <h3 className="text-sm font-bold mb-3">Seller</h3>
                <div className="flex items-center gap-3">
@@ -262,7 +290,7 @@ export default function ListingDetailPage() {
           </div>
 
           {/* Right Column: Info & Buttons */}
-          <div className="sticky top-6 space-y-3">
+            <div className="hidden lg:block sticky top-6 space-y-3">
             <h1 className="text-2xl font-bold leading-tight">{listing.title}</h1>
             <p className="text-3xl font-bold text-[#FF5722]">{formatPrice(listing)}</p>
             {isSold && <div className="bg-red-50 text-red-700 px-3 py-1 rounded text-xs font-bold w-fit">Item sold</div>}
