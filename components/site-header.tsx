@@ -613,14 +613,18 @@ function SiteHeaderInner() {
             <SearchBar onToggleFilters={() => setShowFilters((v) => !v)} />
           </div>
 
-          <div className="flex items-center gap-1 flex-shrink-0">
+          <span className="hidden sm:contents">
+  <IconLink href={`/${locale}/dashboard`} label="My Boutique">
+    <StoreIcon />
+  </IconLink>
+</span>
             {user ? (
               <>
                 <Link
                   href={`/${locale}/listings/new`}
                   className="inline-flex items-center gap-1 bg-[#FF5722] text-white text-sm font-medium px-4 py-2.5 rounded-full hover:bg-[#E64A19] transition-colors shadow-sm"
                 >
-                  <PlusIcon /> {tNav('sell')}
+                  <PlusIcon /> <span className="hidden sm:inline">{tNav('sell')}</span>
                 </Link>
 
                 <IconLink href={`/${locale}/dashboard`} label={locale === 'vi' ? 'Cửa hàng của tôi' : 'My Boutique'}>
@@ -707,7 +711,7 @@ function SiteHeaderInner() {
                 <form action={`/${locale}/auth/signout`} method="post">
                   <button
                     type="submit"
-                    className="text-xs text-stone-500 hover:text-stone-900 px-2 py-1.5 ml-1"
+                    className="hidden sm:block text-xs text-stone-500 hover:text-stone-900 px-2 py-1.5 ml-1"
                   >
                     {tNav('signout')}
                   </button>
