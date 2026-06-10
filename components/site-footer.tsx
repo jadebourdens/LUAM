@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 
 // Add here the paths you have already built
-const BUILT_PAGES = ['/about', '/help'];
+const BUILT_PAGES = ['/about', '/help', '/how-it-works', '/sustainability'];
 
 const translations: Record<string, {
   sections: { title: string; links: { name: string; href: string }[] }[]
@@ -17,24 +17,18 @@ const translations: Record<string, {
         links: [
           { name: "About us", href: "/about" },
           { name: "Sustainability", href: "/sustainability" },
-          { name: "Accessibility", href: "/accessibility" },
         ],
       },
       {
         title: "Discover",
         links: [
           { name: "How it works", href: "/how-it-works" },
-          { name: "Item Verification", href: "/item-verification" },
-          { name: "Mobile apps", href: "/apps" },
-          { name: "Infoboard", href: "/infoboard" },
         ],
       },
       {
         title: "Help",
         links: [
           { name: "Help Centre", href: "/help" },
-          { name: "Selling", href: "/help/selling" },
-          { name: "Buying", href: "/help/buying" },
           { name: "Trust and Safety", href: "/help/trust-and-safety" },
         ],
       },
@@ -48,24 +42,18 @@ const translations: Record<string, {
         links: [
           { name: "Về chúng tôi", href: "/about" },
           { name: "Phát triển bền vững", href: "/sustainability" },
-          { name: "Khả năng tiếp cận", href: "/accessibility" },
         ],
       },
       {
         title: "Khám phá",
         links: [
           { name: "Cách thức hoạt động", href: "/how-it-works" },
-          { name: "Xác minh sản phẩm", href: "/item-verification" },
-          { name: "Ứng dụng di động", href: "/apps" },
-          { name: "Bảng thông tin", href: "/infoboard" },
         ],
       },
       {
         title: "Hỗ trợ",
         links: [
           { name: "Trung tâm trợ giúp", href: "/help" },
-          { name: "Bán hàng", href: "/help/selling" },
-          { name: "Mua hàng", href: "/help/buying" },
           { name: "Tin cậy & An toàn", href: "/help/trust-and-safety" },
         ],
       },

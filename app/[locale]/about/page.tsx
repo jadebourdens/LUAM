@@ -47,7 +47,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
         /* ─── HERO ─── */
         .la-hero {
           position: relative;
-          padding: 52px 0 44px;
+          padding: 16px 0 44px;
           background: var(--warm-white);
           overflow: hidden;
         }
@@ -111,19 +111,19 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
         }
 
         .la-hero__sub {
-          max-width: 480px;
-          font-size: 16px;
-          font-weight: 400;
-          line-height: 1.7;
-          color: var(--muted);
-        }
+  max-width: 340px;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.7;
+  color: var(--muted);
+}
 
         .la-hero__rule {
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          margin-top: 30px;
-        }
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 16px;
+}
 
         .la-hero__rule-line {
           width: 48px; height: 1.5px;
@@ -330,7 +330,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
 
         .la-values__grid {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
+          grid-template-columns: repeat(2, 1fr);
           gap: 1px;
           background: rgba(255,255,255,0.06);
           border: 1px solid rgba(255,255,255,0.06);
@@ -477,19 +477,18 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
             </p>
             <h1 className="la-hero__h1">
               {isVi ? (
-                <>Nơi tài năng<br /><em>gặp gỡ</em> thế giới.</>
+                <>Nơi đam mê<br /><em>thành</em> công việc thú vị.</>
               ) : (
-                <>Where craft<br />finds its <em>people.</em></>
+                <>Where passion<br />becomes a <em>cool job.</em></>
               )}
             </h1>
             <p className="la-hero__sub">
               {isVi
-                ? "Luam ra đời từ niềm tin rằng mỗi sản phẩm thủ công đều mang trong mình một câu chuyện — về người tạo ra nó, về mảnh đất Việt Nam."
-                : "Luam was born from the belief that every handcrafted object holds a story — about the hands that made it, the land it came from, and the spirit that makes it irreplaceable."}
+                ? "Nơi mua sắm thư giãn cho hàng local — nơi bạn bè, gia đình và những người đam mê biến điều họ yêu thích thành một công việc thú vị. Vì công việc không nhất thiết phải nhàm chán. Chúng tôi ở đây cho những người dám mơ."
+                : "The laid-back place to shop local — where friends, family, and passionate people turn what they love into a cool job. Because work doesn't have to be boring. We're here for the brave dreamers."}
             </p>
             <div className="la-hero__rule">
               <div className="la-hero__rule-line" />
-              <span className="la-hero__rule-text">{isVi ? "Khám phá" : "Scroll to explore"}</span>
             </div>
           </div>
         </section>
@@ -525,12 +524,12 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
               {isVi ? (
                 <>
                   <p>Tại Luam, chúng tôi kết nối các nghệ sĩ và doanh nghiệp khởi nghiệp với những người mua trân trọng sự sáng tạo và tính nguyên bản.</p>
-                  <p>Sứ mệnh của chúng tôi là tạo ra một không gian nơi mỗi giao dịch đều là sự ủng hộ thiết thực cho các thương hiệu địa phương Việt Nam.</p>
+                  <p>Chúng tôi muốn tạo ra một không gian nơi mỗi giao dịch đều là sự ủng hộ thiết thực cho các thương hiệu địa phương Việt Nam.</p>
                 </>
               ) : (
                 <>
                   <p>At Luam, we connect artists and startups with buyers who value creativity and authenticity. Every product on our platform represents a maker who has poured intention into their craft.</p>
-                  <p>Our mission is to build a bridge where every purchase serves as a meaningful step toward supporting and uplifting local Vietnamese brands.</p>
+                  <p>We want to build a bridge where every purchase serves as a meaningful step toward supporting and uplifting local Vietnamese brands.</p>
                 </>
               )}
             </div>
@@ -539,19 +538,15 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
           <div className="la-story__right">
             <blockquote className="la-pull">
               {isVi
-                ? "\"Luam không chỉ là nơi mua sắm — đó là nơi tôn vinh tài năng Việt.\""
+                ? "\"Luam không chỉ là nơi mua sắm — đó là một cộng đồng ủng hộ thủ công, đồ handmadeinvietnam\""
                 : "\"Luam is more than a marketplace — it is a community celebrating Vietnamese craftsmanship.\""}
             </blockquote>
             <div className="la-story__body">
               {isVi ? (
                 <>
-                  <p>Chúng tôi tin vào giá trị của sự kết nối và những câu chuyện phía sau mỗi sản phẩm.</p>
-                  <p>Khi bạn mua sắm tại đây, bạn không chỉ nhận được một sản phẩm — bạn trở thành một phần của câu chuyện đó.</p>
                 </>
               ) : (
                 <>
-                  <p>We believe in the power of connection and the stories behind every creation. Each brand on Luam is carefully curated for quality, authenticity, and creative vision.</p>
-                  <p>When you shop here, you are not just receiving a product — you become part of its story.</p>
                 </>
               )}
             </div>
@@ -571,25 +566,19 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
           <div className="la-values__inner">
             <div className="la-values__head">
               <p className="la-values__tag">{isVi ? "Giá trị cốt lõi" : "What we stand for"}</p>
-              <h2 className="la-values__h2">{isVi ? "Ba nguyên tắc" : "Three principles"}</h2>
             </div>
             <div className="la-values__grid">
               {[
                 {
                   n: "01",
-                  en: { title: "Authenticity", body: "We only work with makers who bring genuine craft and personal vision. No mass production. Every piece reflects a real person behind it." },
-                  vi: { title: "Chân thực", body: "Chúng tôi chỉ hợp tác với những người thực sự đam mê thủ công. Không sản xuất đại trà. Mỗi sản phẩm là một câu chuyện thật." }
+                  en: { title: "Authenticity", body: "We only work with makers who bring genuine craft and personal vision. No mass production. Every piece reflects a real person and brand behind it." },
+                  vi: { title: "Chân thực", body: "Chúng tôi chỉ hợp tác với những người thực sự đam mê thủ công. Không sản xuất đại trà." }
                 },
                 {
                   n: "02",
-                  en: { title: "Community", body: "Luam is built on relationships — between makers and buyers, between tradition and modernity, between local pride and global reach." },
-                  vi: { title: "Cộng đồng", body: "Luam được xây dựng trên các mối quan hệ — giữa nghệ nhân và người mua, giữa truyền thống và hiện đại, giữa bản sắc địa phương và tầm nhìn toàn cầu." }
+                  en: { title: "Community", body: "Luam is built on relationships — between makers and buyers." },
+                  vi: { title: "Cộng đồng", body: "Luam được xây dựng trên các mối quan hệ — giữa nghệ nhân và người mua." }
                 },
-                {
-                  n: "03",
-                  en: { title: "Intention", body: "Every decision — from how we curate to how we communicate — is made with care. We believe thoughtfulness is a form of respect." },
-                  vi: { title: "Có chủ đích", body: "Mọi quyết định — từ cách chúng tôi tuyển chọn đến cách giao tiếp — đều được thực hiện với sự cẩn thận. Sự chu đáo là một hình thức tôn trọng." }
-                }
               ].map(v => (
                 <div key={v.n} className="la-val">
                   <p className="la-val__n">{v.n}</p>
@@ -610,12 +599,12 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
           </div>
           <div>
             <p className="la-closing__text">
-              {isVi
-                ? <>Đây là nơi <em>câu chuyện</em> gặp gỡ thương mại —<br />và nơi thương mại trở thành <em>di sản.</em></>
-                : <>This is where <em>story</em> meets commerce —<br />and where commerce becomes <em>legacy.</em></>}
-            </p>
-            <a className="la-cta" href={`/${locale}`}>
-              {isVi ? "Khám phá cửa hàng" : "Explore the marketplace"}
+  {isVi
+    ? <>Những thứ tốt, làm bởi <em>người thật.</em><br />Tìm thấy ngay <em>tại đây.</em></>
+    : <>Good things, made by <em>real people.</em><br />Found right <em>here.</em></>}
+</p>
+<a className="la-cta" href={`/${locale}`}>
+  {isVi ? "Khám phá cửa hàng" : "Explore the marketplace"}
             </a>
           </div>
         </section>

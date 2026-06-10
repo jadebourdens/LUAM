@@ -143,14 +143,13 @@ export default async function Home({
                       {firstImage ? (
                         <>
                           <Image
-                            src={firstImage}
-                            alt={listing.title}
-                            fill
-                            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
-                            className="object-cover group-hover:scale-105 transition-transform duration-300"
-                            priority={index === 0}
-                            loading={index === 0 ? undefined : 'lazy'}
-                          />
+  src={firstImage}
+  alt={listing.title}
+  fill
+  sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
+  className="object-cover group-hover:scale-105 transition-transform duration-300"
+  priority={index === 0}
+/>
                           {listing.status === 'sold' && (
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
                               <span className="text-white text-sm font-bold tracking-widest bg-black/60 px-3 py-1 rounded-lg">SOLD</span>

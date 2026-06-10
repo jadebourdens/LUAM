@@ -1,5 +1,5 @@
 'use client'
-
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -34,6 +34,8 @@ const statusLabels: Record<string, string> = {
 
 export default function OrdersPage() {
   const t = useTranslations('Orders')
+  const pathname = usePathname()
+  const locale = pathname.startsWith('/vi') ? 'vi' : 'en' 
   const supabase = createClient()
   const [userId, setUserId] = useState<string | null>(null)
   const [buying, setBuying] = useState<Order[]>([])
@@ -152,7 +154,7 @@ export default function OrdersPage() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <Link href={`/listings/${o.listing?.id}`} className="font-semibold text-[#FF5722] hover:underline truncate block">
+                    <Link href={`/${locale}/listings/${o.listing?.id}`} className="font-semibold text-[#FF5722] hover:underline truncate block">
                       {o.listing?.title || 'Listing'}
                     </Link>
                     <p className="text-xs text-gray-500">{otherLabel}: {otherUser?.username}</p>
