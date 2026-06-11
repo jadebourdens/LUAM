@@ -132,7 +132,7 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
   const [error, setError] = useState<string | null>(null)
   const [priceDisplay, setPriceDisplay] = useState(
   initialData?.price_vnd
-    ? initialData.price_vnd.toLocaleString('vi-VN')
+    ? initialData.price_vnd.toString()
     : initialData?.price_usd
     ? initialData.price_usd.toLocaleString('en-US')
     : ''
@@ -356,6 +356,7 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
           }
         }
 
+        router.refresh()
         router.push(`/${locale}/listings/${data.id}`)
       }
       
