@@ -288,7 +288,7 @@ export default async function HelpPage({ params }: { params: Promise<{ locale: '
               {isVi ? "Vẫn cần trợ giúp?" : "Still need help?"}
               <span>{isVi ? "Chúng tôi luôn sẵn sàng hỗ trợ bạn." : "We're always happy to help."}</span>
             </div>
-            <a href="mailto:hello@luam.vn" className="hp__contact-btn">
+            <a href="mailto:jadebourdens@gmail.com" className="hp__contact-btn">
               {isVi ? "Liên hệ chúng tôi" : "Contact us"} →
             </a>
           </div>
