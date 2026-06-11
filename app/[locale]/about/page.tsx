@@ -70,7 +70,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
         }
 
         .la-hero__inner {
-          max-width: 880px;
+          max-width: 1040px;
           margin: 0 auto;
           padding: 0 64px 0 80px;
           position: relative;
@@ -96,7 +96,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
 
         .la-hero__h1 {
           font-family: 'Playfair Display', serif;
-          font-size: clamp(48px, 7.5vw, 80px);
+          font-size: clamp(42px, 6vw, 64px);
           font-weight: 900;
           line-height: 1.0;
           letter-spacing: -0.02em;
@@ -111,7 +111,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
         }
 
         .la-hero__sub {
-  max-width: 340px;
+  max-width: 520px;
   font-size: 15px;
   font-weight: 400;
   line-height: 1.7;
