@@ -393,11 +393,11 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Core Details Section */}
           <div className="border border-gray-200 rounded-lg p-6 bg-gray-50/50 hover:bg-gray-50 transition-colors">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">Core Details</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">{t('form.core_details')}</h2>
             
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Title *</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t('form.title')}</label>
                 <input
                   type="text"
                   required
@@ -409,7 +409,7 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t('form.description')}</label>
                 <textarea
                   rows={5}
                   value={form.description}
@@ -421,7 +421,7 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Price *</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t('form.price')}</label>
                   <input
   type="text"
   required
@@ -437,7 +437,7 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
 />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Currency *</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t('form.currency')}</label>
                   
 <select
   value={form.currency}
