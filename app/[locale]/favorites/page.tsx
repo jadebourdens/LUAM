@@ -18,7 +18,7 @@ export default async function FavoritesPage() {
 
   const { data: favorites } = await supabase
     .from('favorites')
-    .select('id, listing:listings(id,title,currency,price_eur,price_usd,price_vnd,status)')
+    .select('id, listing:listings(id,title,currency,price_eur,price_usd,price_vnd,status,listing_images(image_url))')
     .eq('user_id', user.id)
 
   return (
@@ -29,7 +29,7 @@ export default async function FavoritesPage() {
         {(!favorites || favorites.length === 0) ? (
           <div className="bg-white rounded-lg shadow p-6 text-gray-500">{t('no_items')}</div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-6 gap-3">
             {favorites.map((f: any) => {
               const listing = f.listing
               const price = listing?.currency === 'EUR'
@@ -37,17 +37,24 @@ export default async function FavoritesPage() {
                 : listing?.currency === 'USD'
                 ? `$${listing.price_usd}`
                 : `${listing?.price_vnd?.toLocaleString()} ₫`
+              const imageUrl = listing?.listing_images?.[0]?.image_url
               return (
-                <div key={f.id} className="bg-white rounded-lg shadow p-4 flex justify-between items-center group">
-                  <div>
-                    <Link href={`/listings/${listing?.id}`} className="font-medium text-[#FF5722] hover:underline">
+                <div key={f.id} className="bg-white rounded-lg shadow overflow-hidden group relative">
+                  <div className="absolute top-2 right-2 z-10">
+                    <DeleteFavoriteButton favoriteId={f.id} />
+                  </div>
+                  <Link href={`/listings/${listing?.id}`}>
+                    {imageUrl ? (
+                      <img src={imageUrl} alt={listing?.title || ''} className="w-full aspect-square object-cover" />
+                    ) : (
+                      <div className="w-full aspect-square bg-gray-200" />
+                    )}
+                  </Link>
+                  <div className="p-2">
+                    <Link href={`/listings/${listing?.id}`} className="block font-medium text-sm text-[#FF5722] hover:underline truncate">
                       {listing?.title || t('unavailable')}
                     </Link>
-                    <p className="text-xs text-gray-500">{t('status')}: {listing?.status || t('unknown')}</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <p className="font-semibold">{price}</p>
-                    <DeleteFavoriteButton favoriteId={f.id} />
+                    <p className="font-semibold text-sm mt-1">{price}</p>
                   </div>
                 </div>
               )

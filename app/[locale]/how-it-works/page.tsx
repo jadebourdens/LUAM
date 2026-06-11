@@ -191,7 +191,7 @@ export default async function HowItWorksPage({ params }: { params: Promise<{ loc
                   {
                     n: "03",
                     en: { title: "Ship & Get Paid", body: "Pack and ship the item directly to the buyer. Once delivered, your earnings are transferred to you." },
-                    vi: { title: "Giao hàng & nhận tiền", body: "Đóng gói và giao hàng trực tiếp cho người mua. Sau khi giao hàng, thu nhập của bạn sẽ được chuyển đến bạn." }
+                    vi: { title: "Giao hàng & nhận tiền", body: "Đóng gói và giao hàng trực tiếp cho người mua." }
                   },
                 ].map(s => (
                   <div key={s.n} className="hw__step">

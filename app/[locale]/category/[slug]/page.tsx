@@ -39,6 +39,45 @@ function getFirstImage(images: string | null): string | null {
   }
 }
 
+const STATIC_CATEGORIES = [
+  { slug: 'women', label: { en: 'Women', vi: 'Nữ' }, children: [
+    { slug: 'women-clothes',     label: { en: 'Clothes',                         vi: 'Quần áo' } },
+    { slug: 'women-shoes',       label: { en: 'Shoes',                           vi: 'Giày dép' } },
+    { slug: 'women-bags',        label: { en: 'Bags',                            vi: 'Túi xách' } },
+    { slug: 'women-accessories', label: { en: 'Accessories / Watches / Jewelry', vi: 'Phụ kiện / Đồng hồ / Trang sức' } },
+  ]},
+  { slug: 'men', label: { en: 'Men', vi: 'Nam' }, children: [
+    { slug: 'men-clothes',     label: { en: 'Clothes',                         vi: 'Quần áo' } },
+    { slug: 'men-shoes',       label: { en: 'Shoes',                           vi: 'Giày dép' } },
+    { slug: 'men-bags',        label: { en: 'Bags',                            vi: 'Túi xách' } },
+    { slug: 'men-accessories', label: { en: 'Accessories / Watches / Jewelry', vi: 'Phụ kiện / Đồng hồ / Trang sức' } },
+  ]},
+  { slug: 'kids', label: { en: 'Kids', vi: 'Trẻ em' }, children: [
+    { slug: 'kids-clothes', label: { en: 'Clothes', vi: 'Quần áo' } },
+    { slug: 'kids-shoes',   label: { en: 'Shoes',   vi: 'Giày dép' } },
+    { slug: 'kids-bags',    label: { en: 'Bags',    vi: 'Túi xách' } },
+    { slug: 'kids-games',   label: { en: 'Games',   vi: 'Đồ chơi' } },
+  ]},
+  { slug: 'home', label: { en: 'Home', vi: 'Nhà cửa' }, children: [
+    { slug: 'home-textiles',  label: { en: 'Textiles & Bedding', vi: 'Vải & Chăn ga' } },
+    { slug: 'home-furniture', label: { en: 'Furniture',          vi: 'Nội thất' } },
+    { slug: 'home-lighting',  label: { en: 'Lighting',           vi: 'Đèn' } },
+    { slug: 'home-kitchen',   label: { en: 'Kitchen & Dining',   vi: 'Bếp & Ăn uống' } },
+    { slug: 'home-decor',     label: { en: 'Decor',              vi: 'Trang trí' } },
+  ]},
+  { slug: 'art-collectibles', label: { en: 'Art & Collectibles', vi: 'Nghệ thuật & Sưu tầm' }, children: [] },
+]
+
+function findCategoryLabel(slug: string, locale: string): string | null {
+  for (const cat of STATIC_CATEGORIES) {
+    if (cat.slug === slug) return locale === 'vi' ? cat.label.vi : cat.label.en
+    for (const sub of cat.children) {
+      if (sub.slug === slug) return locale === 'vi' ? sub.label.vi : sub.label.en
+    }
+  }
+  return null
+}
+
 export default async function CategoryPage({ params }: Props) {
   const { locale, slug } = await params
   const supabase = await createClient()
@@ -69,25 +108,26 @@ const { data: listings } = await supabase
   .eq('status', 'active')
   .order('created_at', { ascending: false })
 
-  const displaySlug = slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+  const fallbackSlug = slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+  const displaySlug = findCategoryLabel(slug, locale) ?? fallbackSlug
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6">
         <nav className="text-sm text-stone-400 mb-2">
-          <Link href={`/${locale}`} className="hover:text-[#FF5722]">Home</Link>
+          <Link href={`/${locale}`} className="hover:text-[#FF5722]">{locale === 'vi' ? 'Trang chủ' : 'Home'}</Link>
           <span className="mx-2">/</span>
           <span className="text-stone-700">{displaySlug}</span>
         </nav>
         <h1 className="text-2xl font-bold text-stone-900">{displaySlug}</h1>
-        <p className="text-sm text-stone-500 mt-1">{listings?.length ?? 0} items</p>
+        <p className="text-sm text-stone-500 mt-1">{listings?.length ?? 0} {locale === 'vi' ? 'sản phẩm' : 'items'}</p>
       </div>
 
       {!listings || listings.length === 0 ? (
         <div className="text-center py-24 text-stone-400">
-          <p className="text-lg">No listings in this category yet.</p>
+          <p className="text-lg">{locale === 'vi' ? 'Chưa có sản phẩm trong danh mục này.' : 'No listings in this category yet.'}</p>
           <Link href={`/${locale}/listings/new`} className="mt-4 inline-block bg-[#FF5722] text-white px-6 py-2 rounded-full text-sm hover:bg-[#E64A19] transition-colors">
-            Be the first to sell here
+            {locale === 'vi' ? 'Hãy là người đầu tiên đăng bán' : 'Be the first to sell here'}
           </Link>
         </div>
       ) : (

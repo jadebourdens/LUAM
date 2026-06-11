@@ -150,8 +150,8 @@ export default async function HowItWorksPage({ params }: { params: Promise<{ loc
                   },
                   {
                     n: "02",
-                    en: { title: "Buy Securely", body: "Pay online via card or bank transfer. Your payment is safe and your order is confirmed instantly." },
-                    vi: { title: "Mua an toàn", body: "Thanh toán qua thẻ hoặc chuyển khoản ngân hàng. Thanh toán của bạn được bảo mật và đơn hàng được xác nhận ngay lập tức." }
+                    en: { title: "Buy Securely", body: "Pay online via bank transfer. Your payment is safe and your order is confirmed instantly." },
+                    vi: { title: "Mua an toàn", body: "Thanh toán qua chuyển khoản ngân hàng, trực tiếp giữa người mua và người bán. Thanh toán của bạn được bảo mật và đơn hàng được xác nhận ngay lập tức." }
                   },
                   {
                     n: "03",
@@ -190,8 +190,8 @@ export default async function HowItWorksPage({ params }: { params: Promise<{ loc
                   },
                   {
                     n: "03",
-                    en: { title: "Ship & Get Paid", body: "Pack and ship the item directly to the buyer. Once delivered, your earnings are transferred to you." },
-                    vi: { title: "Giao hàng & nhận tiền", body: "Đóng gói và giao hàng trực tiếp cho người mua. Sau khi giao hàng, thu nhập của bạn sẽ được chuyển đến bạn." }
+                    en: { title: "Ship & Get Paid", body: "Pack and ship the item directly to the buyer." },
+                    vi: { title: "Giao hàng & nhận tiền", body: "Đóng gói và giao hàng trực tiếp cho người mua." }
                   },
                 ].map(s => (
                   <div key={s.n} className="hw__step">

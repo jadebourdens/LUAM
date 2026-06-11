@@ -1,4 +1,4 @@
-export type Currency = 'EUR' | 'USD' | 'VND'
+export type Currency =  'USD' | 'VND'
 
 export type ListingCondition = 'new' | 'like_new' | 'good' | 'fair' | 'worn'
 
