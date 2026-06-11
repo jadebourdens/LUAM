@@ -159,6 +159,21 @@
     "pending_alert": "Bạn có {count} đơn hàng đang chờ xác nhận.",
     "pending_alert_single": "Kiểm tra ứng dụng ngân hàng với mã tham chiếu"
   },
+
+  "sellers": {
+    "title": "Người bán",
+    "breadcrumb": "Người bán",
+    "independentSeller": "Người bán độc lập",
+    "memberSince": "Thành viên từ",
+    "items": "{count} sản phẩm",
+    "item": "{count} sản phẩm",
+    "allItems": "Tất cả sản phẩm",
+    "contactSeller": "Liên hệ người bán",
+    "noItems": "Chưa có sản phẩm",
+    "reviews": "Đánh giá",
+    "notFound": "Không tìm thấy người bán"
+  },
+  
   "bank_name": "Tên ngân hàng",
   "bank_account_number": "Số tài khoản",
   "bank_account_name": "Tên chủ tài khoản",
