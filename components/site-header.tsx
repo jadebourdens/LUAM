@@ -258,7 +258,7 @@ function CategoryNav() {
   return (
     <nav className="border-t border-stone-100 bg-white relative" style={{ zIndex: 100 }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <ul className="flex items-center overflow-x-auto">
+        <ul className="flex items-center flex-wrap">
           {STATIC_CATEGORIES.map((cat: Category) => {
             const hasSub = cat.children.length > 0
             const isActive = activeSlug === cat.slug
