@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
+import { Analytics } from '@vercel/analytics/react';  // ADD THIS
+
 
 export const metadata = {
   title: 'LUAM – Chợ hàng local Việt Nam',
@@ -32,4 +34,12 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       </body>
     </html>
   );
+
+  <NextIntlClientProvider locale={locale} messages={messages}>
+          <main>
+            {children}
+          </main>
+          <Analytics />  {/* ADD THIS */}
+        </NextIntlClientProvider>
+        
 }

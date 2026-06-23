@@ -45,7 +45,20 @@ const orderCurrency = listing.price_vnd != null ? 'VND' : listing.currency
 
     const unitAmount = toSmallestUnit(amountMain, listing.currency)
     const platformFee = calculatePlatformFee(unitAmount)
+const { data: existing } = await supabase
+  .from('orders')
+  .select('id')
+  .eq('listing_id', listingId)
+  .eq('buyer_id', user.id)
+  .eq('status', 'pending')
+  .single()
 
+if (existing) {
+  return NextResponse.json({
+    localPayment: true,
+    url: `/checkout/local-transfer?order_id=${existing.id}&ref=LUAM-${existing.id.slice(0, 8).toUpperCase()}`,
+  })
+}
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
@@ -125,8 +138,7 @@ const orderCurrency = listing.price_vnd != null ? 'VND' : listing.currency
 
       return NextResponse.json({
         localPayment: true,
-        url: `${process.env.NEXT_PUBLIC_APP_URL}/en/checkout/local-transfer?order_id=${order.id}&ref=${transferRef}`,
-      })
+url: `/checkout/local-transfer?order_id=${order.id}&ref=${transferRef}`,      })
     }
 
     if (chosenMethod === 'vnpay_mock' || chosenMethod === 'momo_mock') {
