@@ -350,6 +350,28 @@ function SiteHeaderInner() {
 
   useEffect(() => { setShowFilters(false) }, [pathname])
 
+  useEffect(() => {
+  if (pathname.includes('/messages') && user) {
+    supabase
+      .from('chat_messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('receiver_id', user.id)
+      .eq('is_read', false)
+      .then(({ count }) => setUnreadCount(count ?? 0))
+  }
+}, [pathname, user])
+
+  useEffect(() => {
+  if (pathname.includes('/messages') && user) {
+    supabase
+      .from('chat_messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('receiver_id', user.id)
+      .eq('is_read', false)
+      .then(({ count }) => setUnreadCount(count ?? 0))
+  }
+}, [pathname, user]) 
+
   const setupRealtimeChannel = useCallback((userId: string) => {
     if (subscriptionRef.current) {
       supabase.removeChannel(subscriptionRef.current)

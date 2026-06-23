@@ -232,8 +232,12 @@ export default function MessagesPage() {
       .eq('is_read', false)
   }, [supabase, user])
 
+  const sendingRef = useRef(false)
+
   const sendMessage = useCallback(async (content: string) => {
-    if (!content.trim() || !activeConversation || !user) return
+  if (!content.trim() || !activeConversation || !user) return
+  if (sendingRef.current) return
+  sendingRef.current = true
 
     const receiverId = activeConversation.buyer_id === user.id
       ? activeConversation.seller_id
@@ -253,6 +257,7 @@ export default function MessagesPage() {
       console.error('Supabase Error:', error)
     }
   }, [activeConversation, user, supabase, loadMessages])
+
 
   const updateStatus = useCallback(async (newStatus: ConvoStatus, agreedPrice?: number) => {
     if (!activeConversation) return
