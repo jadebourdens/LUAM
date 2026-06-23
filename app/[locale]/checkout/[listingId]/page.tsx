@@ -101,8 +101,7 @@ export default function CheckoutPage() {
           {isVi ? 'Xác nhận đơn hàng' : 'Final Checkout'}
         </h1>
         <p className="text-gray-600 mb-6">
-          {isVi ? 'Kiểm tra thông tin thanh toán trước khi tiếp tục.' : 'Review your payment details before paying with Stripe.'}
-        </p>
+{isVi ? 'Kiểm tra thông tin thanh toán trước khi tiếp tục.' : 'Review your payment details before continuing.'}        </p>
 
         {error && <p className="text-red-600 mb-4 bg-red-50 border border-red-200 p-3 rounded">{error}</p>}
 
