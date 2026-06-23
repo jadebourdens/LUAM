@@ -22,17 +22,16 @@ const CATEGORY_SIZES: Record<string, string[]> = {
   
   // Home & Art
   'home':              ['One size'],
-  'home-bedding':      ['90x190 cm', '140x190 cm', '160x200 cm', '180x200 cm'],
+  'home-textiles':     ['90x190 cm', '140x190 cm', '160x200 cm', '180x200 cm'],
   'home-curtains':     ['140x240 cm', '140x260 cm', '140x280 cm'],
   'home-furniture':    ['One size'],
   'home-lighting':     ['One size'],
   'home-kitchen':      ['One size'],
   'home-decor':        ['One size'],
   
-  'art-collectibles':  ['CUSTOM'], 
+  'art-collectibles':  ['Custom'],
 }
 
 export function getSizesForCategory(slug: string): string[] {
-  // Returns the list for the slug, or defaults to ['One size'] if not found
   return CATEGORY_SIZES[slug] ?? ['One size']
 }

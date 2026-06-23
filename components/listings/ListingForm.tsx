@@ -23,8 +23,25 @@ interface Category {
   children?: Category[]
 }
 
-const COLORS = ['Black', 'White', 'Red', 'Blue', 'Green', 'Yellow', 'Beige', 'Brown', 'Grey', 'Pink', 'Purple', 'Orange', 'Navy', 'Cream', 'Silver', 'Gold', 'Multi']
-
+const COLORS: { en: string; vi: string }[] = [
+  { en: 'Black', vi: 'Đen' },
+  { en: 'White', vi: 'Trắng' },
+  { en: 'Red', vi: 'Đỏ' },
+  { en: 'Blue', vi: 'Xanh dương' },
+  { en: 'Green', vi: 'Xanh lá' },
+  { en: 'Yellow', vi: 'Vàng' },
+  { en: 'Beige', vi: 'Be' },
+  { en: 'Brown', vi: 'Nâu' },
+  { en: 'Grey', vi: 'Xám' },
+  { en: 'Pink', vi: 'Hồng' },
+  { en: 'Purple', vi: 'Tím' },
+  { en: 'Orange', vi: 'Cam' },
+  { en: 'Navy', vi: 'Xanh navy' },
+  { en: 'Cream', vi: 'Kem' },
+  { en: 'Silver', vi: 'Bạc' },
+  { en: 'Gold', vi: 'Vàng gold' },
+  { en: 'Multi', vi: 'Nhiều màu' },
+]
 const CATEGORY_ICONS: Record<string, string> = {
   women: '👗',
   men: '👔',
@@ -412,8 +429,8 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
                   >
                     <option value="">{isVi ? 'Chọn màu' : 'Select color'}</option>
                     {COLORS.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
+  <option key={c.en} value={c.en}>{isVi ? c.vi : c.en}</option>
+))}
                   </select>
                 </div>
                 <div>
