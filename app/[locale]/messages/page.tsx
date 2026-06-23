@@ -378,10 +378,11 @@ export default function MessagesPage() {
   const agreedPrice: number = activeConversation?.agreed_price ?? 0
   const sellerProfile = activeConversation?.seller
 
-  const showAcceptBtn        = isSeller && convoStatus === 'open' && pendingOfferAmount !== null
-  const showTransferredBtn   = isBuyer  && convoStatus === 'accepted'
-  const showMarkCompletedBtn = isSeller && convoStatus === 'waiting_for_verification'
-  const showBankDetails      = isBuyer  && (convoStatus === 'accepted' || convoStatus === 'waiting_for_verification')
+  const showAcceptBtn           = isSeller && convoStatus === 'open' && pendingOfferAmount !== null
+  const showTransferredBtn      = isBuyer  && convoStatus === 'accepted'
+  const showMarkCompletedBtn    = isSeller && convoStatus === 'waiting_for_verification'
+  const showSellerReceivedBtn   = isSeller && convoStatus === 'accepted'
+  const showBankDetails         = isBuyer  && (convoStatus === 'accepted' || convoStatus === 'waiting_for_verification')
 
   return (
     <>
@@ -537,6 +538,27 @@ export default function MessagesPage() {
                         {statusUpdating ? '...' : t('mark_completed')}
                       </button>
                     )}
+                    {showMarkCompletedBtn && (
+  <button
+    onClick={handleMarkCompleted}
+    disabled={statusUpdating}
+    className="flex-1 min-w-fit px-4 py-3 rounded-xl bg-purple-600 text-white font-semibold text-sm hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+  >
+    {statusUpdating ? '...' : t('mark_completed')}
+  </button>
+)}
+{showSellerReceivedBtn && (
+  <button
+    onClick={async () => {
+      await updateStatus('waiting_for_verification')
+      sendMessage('💰 Người bán xác nhận đã nhận được tiền. Giao dịch đang được hoàn tất.')
+    }}
+    disabled={statusUpdating}
+    className="flex-1 min-w-fit px-4 py-3 rounded-xl bg-green-600 text-white font-semibold text-sm hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+  >
+    {statusUpdating ? '...' : '💰 I received the payment'}
+  </button>
+)}
                     {!showAcceptBtn && !showTransferredBtn && !showMarkCompletedBtn && convoStatus !== 'completed' && convoStatus !== 'cancelled' && (
                       <button
                         onClick={() => setShowOffer(true)}
