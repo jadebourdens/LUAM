@@ -67,14 +67,14 @@ export default function CheckoutPage() {
     }
 
     if (data.url) {
-      if (data.localPayment) {
-        router.push(data.url)
-      } else {
-        window.open(data.url, '_blank')
-      }
-      setLoading(false)
-      return
-    }
+  if (data.localPayment) {
+    router.push(`/${locale}${data.url}`)
+  } else {
+    window.open(data.url, '_blank')
+  }
+  setLoading(false)
+  return
+}
 
     setError(isVi ? 'Không tìm thấy đường dẫn thanh toán.' : 'Missing checkout URL from Stripe')
     setLoading(false)
