@@ -5,7 +5,6 @@ import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
 import SiteHeader from '@/components/site-header';
 import SiteFooter from '@/components/site-footer';
-import '../globals.css';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -40,19 +39,6 @@ export default async function LocaleLayout({
             })(window,document,'script','dataLayer','GTM-54XFQDFH');`
           }}
         />
-
-      {/* Google Analytics */}
-      <script async src="https://www.googletagmanager.com/gtag/js?id=G-38Q1EG55BD" />
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-38Q1EG55BD');
-          `
-        }}
-      />
       </head>
       <body>
         {/* Google Tag Manager (noscript) - Immediately after <body> */}
