@@ -290,8 +290,8 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
           if (insertError) throw new Error(`Failed to save image ${i + 1}: ${insertError.message}`)
         }
 
-        router.refresh()
-        router.push(`/${locale}/listings/${data.id}`)
+        await new Promise(resolve => setTimeout(resolve, 500))
+router.push(`/${locale}/listings/${data.id}`)
       }
 
       if (onOpenChange) onOpenChange(false)
