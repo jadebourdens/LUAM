@@ -198,5 +198,24 @@
     "password_mismatch": "Mật khẩu không khớp",
     "password_short": "Mật khẩu phải có ít nhất 6 ký tự",
     "success": "Tạo tài khoản thành công! Kiểm tra email để xác minh tài khoản. Đang chuyển hướng..."
+  },
+
+ "ListingForm": {
+    "specifications": "Thông số kỹ thuật",
+    "visuals": "Hình ảnh",
+    "category": "Danh mục",
+    "select_category": "Chọn danh mục",
+    "color": "Màu sắc",
+    "select_color": "Chọn màu",
+    "sizes_available": "Kích thước có sẵn",
+    "select_category_first": "(Vui lòng chọn danh mục trước)",
+    "brand": "Thương hiệu",
+    "brand_placeholder": "Tìm kiếm hoặc nhập tên thương hiệu",
+    "condition": "Tình trạng",
+    "images": "Hình ảnh",
+    "drag_drop": "Kéo & thả hình ảnh vào đây hoặc nhấn để chọn",
+    "file_limit": "PNG, JPG, GIF tối đa 10MB mỗi tệp",
+    "cancel": "Hủy",
+    "save_listing": "Lưu tin đăng"
   }
 }

@@ -32,20 +32,31 @@ export default function CheckoutPage() {
     if (listingId) load()
   }, [listingId])
 
-  const amount = listing?.currency === 'EUR' ? Number(listing?.price_eur || 0) : listing?.currency === 'USD' ? Number(listing?.price_usd || 0) : Number(listing?.price_vnd || 0)
+  const getAmount = () => {
+    if (!listing) return 0
+
+    if (listing.currency === 'USD') return Number(listing.price_usd ?? 0)
+    if (listing.currency === 'VND') return Number(listing.price_vnd ?? 0)
+    if (listing.currency === 'EUR') return Number(listing.price_eur ?? 0)
+
+    return 0
+  }
+
+  const amount = getAmount()
   const total = amount
 
   const formatMoney = (value: number) => {
-    if (!listing?.currency) return `${value}`
-    if (listing.currency === 'EUR') return `€${value.toFixed(2)}`
-    if (listing.currency === 'USD') return `$${value.toFixed(2)}`
-    return `${Math.round(value).toLocaleString()} ₫`
+    const n = Number(value) || 0
+    if (!listing?.currency) return `${n}`
+    if (listing.currency === 'EUR') return `€${n.toFixed(2)}`
+    if (listing.currency === 'USD') return `$${n.toFixed(2)}`
+    return `${Math.round(n).toLocaleString('en-US')} ₫`
   }
 
   const handleBuyNow = async () => {
-  if (loading) return
-  setLoading(true)
-  setError(null)
+    if (loading) return
+    setLoading(true)
+    setError(null)
 
     await fetch('/api/analytics/track', {
       method: 'POST',
@@ -68,14 +79,14 @@ export default function CheckoutPage() {
     }
 
     if (data.url) {
-  if (data.localPayment) {
-    router.push(`/${locale}${data.url}`)
-  } else {
-    window.open(data.url, '_blank')
-  }
-  setLoading(false)
-  return
-}
+      if (data.localPayment) {
+        router.push(`/${locale}${data.url}`)
+      } else {
+        window.open(data.url, '_blank')
+      }
+      setLoading(false)
+      return
+    }
 
     setError(isVi ? 'Không tìm thấy đường dẫn thanh toán.' : 'Missing checkout URL from Stripe')
     setLoading(false)

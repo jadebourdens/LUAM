@@ -30,6 +30,7 @@ type ListingData = {
   size?: string
   condition?: string
   status?: string
+  quantity?: number
   seller_id?: string
   seller?: {
     id: string

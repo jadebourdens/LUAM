@@ -6,6 +6,7 @@ import { routing } from '@/i18n/routing';
 import SiteHeader from '@/components/site-header';
 import SiteFooter from '@/components/site-footer';
 import { GoogleTagManager } from '@next/third-parties/google';
+// @ts-ignore: allow side-effect CSS import without type declarations
 import '../globals.css';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {

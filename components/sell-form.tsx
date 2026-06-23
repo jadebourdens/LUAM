@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { getSizesForCategory } from '@/lib/category-sizes'
 
 interface Category { id: string; name: string; slug: string }
 
@@ -13,24 +14,6 @@ interface Props {
 }
 
 const COLORS = ['Black', 'White', 'Red', 'Blue', 'Green', 'Yellow', 'Beige', 'Brown', 'Grey', 'Pink', 'Purple', 'Orange', 'Navy', 'Cream', 'Silver', 'Gold', 'Multi']
-
-const SIZE_OPTIONS_BY_CATEGORY: Record<string, string[]> = {
-  'women': ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
-  'women-clothes': ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
-  'women-shoes': ['35', '36', '37', '38', '39', '40', '41', '42'],
-  'women-bags': ['One size'],
-  'women-accessories': ['One size'],
-  'men': ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'],
-  'men-clothes': ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'],
-  'men-shoes': ['35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46'],
-  'men-bags': ['One size'],
-  'men-accessories': ['One size'],
-  'kids': ['2', '3', '4', '5', '6', '7', '8', '9', '10'],
-  'kids-clothes': ['2', '3', '4', '5', '6', '7', '8', '9', '10'],
-  'kids-shoes': ['24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35'],
-  'kids-bags': ['One size'],
-  'kids-games': ['One size'],
-}
 
 export default function ListingForm({ locale, onSuccess, defaultCategorySlug, initialData }: Props) {
   const router = useRouter()
@@ -64,7 +47,7 @@ export default function ListingForm({ locale, onSuccess, defaultCategorySlug, in
     if (!form.category_id) return []
     const matchedCategory = categories.find((c) => c.id === form.category_id)
     if (!matchedCategory) return []
-    return SIZE_OPTIONS_BY_CATEGORY[matchedCategory.slug] || []
+    return getSizesForCategory(matchedCategory.slug)
   }
 
   const availableSizes = getAvailableSizes()

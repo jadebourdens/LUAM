@@ -29,11 +29,11 @@ export async function POST(req: Request) {
 
     if (updateOrderError) throw updateOrderError
 
-    // 3. Mark listing as sold
-    await supabase
-      .from('listings')
-      .update({ status: 'sold' })
-      .eq('id', order.listing_id)
+    // 3. Decrement stock — flips listing to 'sold' ONLY when the last unit is gone
+    const { error: stockError } = await supabase
+      .rpc('decrement_listing_stock', { p_listing_id: order.listing_id })
+
+    if (stockError) throw stockError
 
     // 4. Sync the checkouts table
     await supabase

@@ -510,64 +510,40 @@ export default function MessagesPage() {
                     <BankDetailsCard seller={sellerProfile} agreedPrice={agreedPrice} currency={offerCurrency} />
                   )}
 
-                  {/* Action buttons */}
                   <div className="border-t border-gray-100 px-6 py-4 flex gap-2 flex-wrap">
-                    {showAcceptBtn && (
-                      <button
-                        onClick={handleAcceptOffer}
-                        disabled={statusUpdating}
-                        className="flex-1 min-w-fit px-4 py-3 rounded-xl bg-green-600 text-white font-semibold text-sm hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                      >
-                    {statusUpdating ? '...' : '✅ Accept Offer'}                      </button>
-                    )}
-                    {showTransferredBtn && (
-                      <button
-                        onClick={handleTransferred}
-                        disabled={statusUpdating}
-                        className="flex-1 min-w-fit px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                      >
-                    {statusUpdating ? '...' : '💳 I have transferred the money'}
-                      </button>
-                    )}
-                    {showMarkCompletedBtn && (
-                      <button
-                        onClick={handleMarkCompleted}
-                        disabled={statusUpdating}
-                        className="flex-1 min-w-fit px-4 py-3 rounded-xl bg-purple-600 text-white font-semibold text-sm hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                      >
-                        {statusUpdating ? '...' : t('mark_completed')}
-                      </button>
-                    )}
-                    {showMarkCompletedBtn && (
-  <button
-    onClick={handleMarkCompleted}
-    disabled={statusUpdating}
-    className="flex-1 min-w-fit px-4 py-3 rounded-xl bg-purple-600 text-white font-semibold text-sm hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-  >
-    {statusUpdating ? '...' : t('mark_completed')}
-  </button>
-)}
-{showSellerReceivedBtn && (
-  <button
-    onClick={async () => {
-      await updateStatus('waiting_for_verification')
-      sendMessage('💰 Người bán xác nhận đã nhận được tiền. Giao dịch đang được hoàn tất.')
-    }}
-    disabled={statusUpdating}
-    className="flex-1 min-w-fit px-4 py-3 rounded-xl bg-green-600 text-white font-semibold text-sm hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-  >
-    {statusUpdating ? '...' : '💰 I received the payment'}
-  </button>
-)}
-                    {!showAcceptBtn && !showTransferredBtn && !showMarkCompletedBtn && convoStatus !== 'completed' && convoStatus !== 'cancelled' && (
-                      <button
-                        onClick={() => setShowOffer(true)}
-                        className="flex-1 min-w-fit px-4 py-3 rounded-xl bg-[#FF5722] text-white font-semibold text-sm hover:bg-[#e64a19] transition-all"
-                      >
-                        {t('make_offer')}
-                      </button>
-                    )}
-                  </div>
+  {/* Seller Actions */}
+  {isSeller && convoStatus === 'open' && pendingOfferAmount !== null && (
+    <button onClick={handleAcceptOffer} disabled={statusUpdating} className="flex-1 px-4 py-3 rounded-xl bg-green-600 text-white font-semibold text-sm hover:bg-green-700">
+      {statusUpdating ? '...' : '✅ Accept Offer'}
+    </button>
+  )}
+
+  {isSeller && convoStatus === 'accepted' && (
+    <button onClick={async () => { await updateStatus('waiting_for_verification'); sendMessage('💰 Payment received.') }} disabled={statusUpdating} className="flex-1 px-4 py-3 rounded-xl bg-green-600 text-white font-semibold text-sm hover:bg-green-700">
+      {statusUpdating ? '...' : '💰 I received the payment'}
+    </button>
+  )}
+
+  {isSeller && convoStatus === 'waiting_for_verification' && (
+    <button onClick={handleMarkCompleted} disabled={statusUpdating} className="flex-1 px-4 py-3 rounded-xl bg-purple-600 text-white font-semibold text-sm hover:bg-purple-700">
+      {statusUpdating ? '...' : t('mark_completed')}
+    </button>
+  )}
+
+  {/* Buyer Actions */}
+  {isBuyer && convoStatus === 'accepted' && (
+    <button onClick={handleTransferred} disabled={statusUpdating} className="flex-1 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700">
+      {statusUpdating ? '...' : '💳 I have transferred the money'}
+    </button>
+  )}
+
+  {/* Default 'Make an Offer' - Only show if no other transaction action is currently needed */}
+  {convoStatus === 'open' && !showAcceptBtn && (
+    <button onClick={() => setShowOffer(true)} className="flex-1 px-4 py-3 rounded-xl bg-[#FF5722] text-white font-semibold text-sm hover:bg-[#e64a19]">
+      {t('make_offer')}
+    </button>
+  )}
+</div>
 
                   {/* Message input */}
                   <div className="border-t border-gray-100 px-6 py-4 flex gap-2">

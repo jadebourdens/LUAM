@@ -11,7 +11,7 @@ type Order = {
   seller_id: string
   status: string
   tracking_number?: string | null
-  currency: 'EUR' | 'USD' | 'VND'
+  currency: | 'USD' | 'VND'
   amount: number
   created_at: string
   updated_at?: string
@@ -73,7 +73,6 @@ export default function OrdersPage() {
   useEffect(() => { load() }, [])
 
   const priceLabel = (o: Order) => {
-    if (o.currency === 'EUR') return `€${o.amount}`
     if (o.currency === 'USD') return `$${o.amount}`
     return `${o.amount?.toLocaleString()} ₫`
   }

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Currency, ListingCondition } from '@/types/database'
+import { getSizesForCategory } from '@/lib/category-sizes'
 import {
   Dialog,
   DialogContent,
@@ -30,31 +31,6 @@ const CATEGORY_ICONS: Record<string, string> = {
   kids: '🧸',
   home: '🏠',
   'art-collectibles': '🎨',
-}
-
-const SIZE_OPTIONS_BY_CATEGORY: Record<string, string[]> = {
-  'women': ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
-  'women-clothes': ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
-  'women-shoes': ['35', '36', '37', '38', '39', '40', '41', '42'],
-  'women-bags': ['One size'],
-  'women-accessories': ['One size'],
-  'men': ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'],
-  'men-clothes': ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'],
-  'men-shoes': ['35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46'],
-  'men-bags': ['One size'],
-  'men-accessories': ['One size'],
-  'kids': ['2', '3', '4', '5', '6', '7', '8', '9', '10'],
-  'kids-clothes': ['2', '3', '4', '5', '6', '7', '8', '9', '10'],
-  'kids-shoes': ['24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35'],
-  'kids-bags': ['One size'],
-  'kids-games': ['One size'],
-  'home': ['One size'],
-  'home-textiles': ['One size'],
-  'home-furniture': ['One size'],
-  'home-lighting': ['One size'],
-  'home-kitchen': ['One size'],
-  'home-decor': ['One size'],
-  'art-collectibles': ['One size'],
 }
 
 const STATIC_CATEGORIES = [
@@ -115,6 +91,7 @@ interface ListingFormProps {
 
 export default function ListingForm({ locale, initialData, isOpen = true, onOpenChange }: ListingFormProps) {
   const t = useTranslations('EditListing')
+  const isVi = locale === 'vi'
   const router = useRouter()
   const supabase = createClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -131,14 +108,12 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [priceDisplay, setPriceDisplay] = useState(
-  initialData?.price_vnd
-    ? initialData.price_vnd.toString()
-    : initialData?.price_usd
-    ? initialData.price_usd.toLocaleString('en-US')
-    : ''
-)
-
-  // ✅ FIXED: moved here from inside handleSubmit
+    initialData?.price_vnd
+      ? initialData.price_vnd.toString()
+      : initialData?.price_usd
+      ? initialData.price_usd.toLocaleString('en-US')
+      : ''
+  )
   const [exchangeRate, setExchangeRate] = useState(26300)
 
   const [form, setForm] = useState({
@@ -156,7 +131,7 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
     if (!form.category_id) return []
     const matchedCategory = categories.find((c) => c.id === form.category_id)
     if (!matchedCategory) return []
-    return SIZE_OPTIONS_BY_CATEGORY[matchedCategory.slug] || []
+    return getSizesForCategory(matchedCategory.slug)
   }
 
   const availableSizes = getAvailableSizes()
@@ -170,7 +145,6 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
     })
   }, [])
 
-  // ✅ FIXED: moved here from inside handleSubmit
   useEffect(() => {
     fetch('https://open.er-api.com/v6/latest/USD')
       .then(res => res.json())
@@ -217,37 +191,22 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
     setUploadedUrls(uploadedUrls.filter((_, i) => i !== index))
   }
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-  }
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-  }
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation() }
+  const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation() }
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    
     const files = Array.from(e.dataTransfer?.files || [])
     if (files.length === 0) return
-    
     const imageFiles = files.filter(f => f.type.startsWith('image/'))
-    if (imageFiles.length === 0) {
-      setError('Please drop image files only')
-      return
-    }
-    
+    if (imageFiles.length === 0) { setError('Please drop image files only'); return }
     const input = fileInputRef.current
     if (input) {
       const dataTransfer = new DataTransfer()
       imageFiles.forEach(file => dataTransfer.items.add(file))
       input.files = dataTransfer.files
-      
-      const event = new Event('change', { bubbles: true })
-      input.dispatchEvent(event)
+      input.dispatchEvent(new Event('change', { bubbles: true }))
     }
   }
 
@@ -272,12 +231,8 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
 
     try {
       const priceNum = parseFloat(form.price)
-      
-      if (isNaN(priceNum) || priceNum <= 0) {
-        throw new Error('Price must be a positive number')
-      }
+      if (isNaN(priceNum) || priceNum <= 0) throw new Error('Price must be a positive number')
 
-      // ✅ exchangeRate is now from component state — no hooks needed here
       const payload = {
         title: form.title,
         description: form.description,
@@ -291,75 +246,37 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
       }
 
       if (initialData) {
-        const { error } = await supabase
-          .from('listings')
-          .update(payload)
-          .eq('id', initialData.id)
-
+        const { error } = await supabase.from('listings').update(payload).eq('id', initialData.id)
         if (error) throw error
 
         if (uploadedUrls.length > 0) {
           const existingImageIds = initialData.images?.map((img: any) => img.id) || []
-          
           if (existingImageIds.length > 0) {
-            const { error: deleteError } = await supabase
-              .from('listing_images')
-              .delete()
-              .in('id', existingImageIds)
-            
-            if (deleteError) {
-              throw new Error(`Failed to remove old images: ${deleteError.message}`)
-            }
+            const { error: deleteError } = await supabase.from('listing_images').delete().in('id', existingImageIds)
+            if (deleteError) throw new Error(`Failed to remove old images: ${deleteError.message}`)
           }
-
           for (let i = 0; i < uploadedUrls.length; i++) {
-            const { error: insertError } = await supabase
-              .from('listing_images')
-              .insert({
-                listing_id: initialData.id,
-                image_url: uploadedUrls[i],
-                position: i,
-              })
-            
-            if (insertError) {
-              throw new Error(`Failed to save image ${i + 1}: ${insertError.message}`)
-            }
+            const { error: insertError } = await supabase.from('listing_images').insert({ listing_id: initialData.id, image_url: uploadedUrls[i], position: i })
+            if (insertError) throw new Error(`Failed to save image ${i + 1}: ${insertError.message}`)
           }
         }
-
         router.push(`/${locale}/listings/${initialData.id}`)
       } else {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) throw new Error('User not found')
 
-        const { data, error } = await supabase
-          .from('listings')
-          .insert([{ ...payload, seller_id: user.id }])
-          .select()
-          .single()
-
+        const { data, error } = await supabase.from('listings').insert([{ ...payload, seller_id: user.id }]).select().single()
         if (error) throw error
 
-        if (uploadedUrls.length > 0) {
-          for (let i = 0; i < uploadedUrls.length; i++) {
-            const { error: insertError } = await supabase
-              .from('listing_images')
-              .insert({
-                listing_id: data.id,
-                image_url: uploadedUrls[i],
-                position: i,
-              })
-            
-            if (insertError) {
-              throw new Error(`Failed to save image ${i + 1}: ${insertError.message}`)
-            }
-          }
+        for (let i = 0; i < uploadedUrls.length; i++) {
+          const { error: insertError } = await supabase.from('listing_images').insert({ listing_id: data.id, image_url: uploadedUrls[i], position: i })
+          if (insertError) throw new Error(`Failed to save image ${i + 1}: ${insertError.message}`)
         }
 
         router.refresh()
         router.push(`/${locale}/listings/${data.id}`)
       }
-      
+
       if (onOpenChange) onOpenChange(false)
     } catch (err: any) {
       setError(err.message)
@@ -367,19 +284,13 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
     }
   }
 
-  const handleOpenChange = (open: boolean) => {
-    if (onOpenChange) {
-      onOpenChange(open)
-    }
-  }
-
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('title')}</DialogTitle>
           <DialogDescription>
-            Complete all fields marked with * to list your item
+            {isVi ? 'Điền đầy đủ các trường có dấu * để đăng tin' : 'Complete all fields marked with * to list your item'}
           </DialogDescription>
         </DialogHeader>
 
@@ -391,10 +302,9 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Core Details Section */}
+          {/* Core Details */}
           <div className="border border-gray-200 rounded-lg p-6 bg-gray-50/50 hover:bg-gray-50 transition-colors">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">{t('form.core_details')}</h2>
-            
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t('form.title')}</label>
@@ -403,86 +313,84 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
                   required
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="e.g., Vintage Leather Jacket"
+                  placeholder={isVi ? 'VD: Áo khoác da vintage' : 'e.g., Vintage Leather Jacket'}
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t('form.description')}</label>
                 <textarea
                   rows={5}
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="Describe your item in detail..."
+                  placeholder={isVi ? 'Mô tả chi tiết sản phẩm của bạn...' : 'Describe your item in detail...'}
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors resize-none"
                 />
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t('form.price')}</label>
                   <input
-  type="text"
-  required
-  value={priceDisplay}
-  onChange={(e) => {
-    const raw = e.target.value.replace(/[^0-9]/g, '')
-    const num = raw === '' ? '' : parseInt(raw, 10)
-    setPriceDisplay(num === '' ? '' : Number(num).toLocaleString('vi-VN'))
-    setForm({ ...form, price: num.toString() })
-  }}
-  placeholder="0"
-  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors"
-/>
+                    type="text"
+                    required
+                    value={priceDisplay}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/[^0-9]/g, '')
+                      const num = raw === '' ? '' : parseInt(raw, 10)
+                      setPriceDisplay(num === '' ? '' : Number(num).toLocaleString('vi-VN'))
+                      setForm({ ...form, price: num.toString() })
+                    }}
+                    placeholder="0"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t('form.currency')}</label>
-                  
-<select
-  value={form.currency}
-  onChange={(e) => setForm({ ...form, currency: e.target.value as Currency })}
-  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors cursor-pointer"
->
-  <option value="VND">VND</option>
-  <option value="USD">USD</option>
-</select>
+                  <select
+                    value={form.currency}
+                    onChange={(e) => setForm({ ...form, currency: e.target.value as Currency })}
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors cursor-pointer"
+                  >
+                    <option value="VND">VND</option>
+                    <option value="USD">USD</option>
+                  </select>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Specifications Section */}
+          {/* Specifications */}
           <div className="border border-gray-200 rounded-lg p-6 bg-gray-50/50 hover:bg-gray-50 transition-colors">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">Specifications</h2>
-            
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">
+              {isVi ? 'Thông số kỹ thuật' : 'Specifications'}
+            </h2>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Category</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  {isVi ? 'Danh mục' : 'Category'}
+                </label>
                 <select
                   value={form.category_id}
                   onChange={(e) => setForm({ ...form, category_id: e.target.value })}
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors cursor-pointer"
                 >
-                  <option value="">Select a category</option>
+                  <option value="">{isVi ? 'Chọn danh mục' : 'Select a category'}</option>
                   {STATIC_CATEGORIES.map((parent) => {
                     const matchedParent = categories.find((c) => c.slug === parent.slug)
-                    
                     if (!parent.children || parent.children.length === 0) {
                       return (
                         <option key={parent.slug} value={matchedParent?.id || parent.slug}>
-                          {CATEGORY_ICONS[parent.slug] || '📦'} {parent.label.en}
+                          {CATEGORY_ICONS[parent.slug] || '📦'} {isVi ? parent.label.vi : parent.label.en}
                         </option>
                       )
                     }
-                    
                     return (
-                      <optgroup key={parent.slug} label={`${CATEGORY_ICONS[parent.slug] || '📦'} ${parent.label.en}`}>
+                      <optgroup key={parent.slug} label={`${CATEGORY_ICONS[parent.slug] || '📦'} ${isVi ? parent.label.vi : parent.label.en}`}>
                         {parent.children.map((child) => {
                           const matchedCategory = categories.find((c) => c.slug === child.slug)
                           return (
                             <option key={child.slug} value={matchedCategory?.id || child.slug}>
-                              → {child.label.en}
+                              → {isVi ? child.label.vi : child.label.en}
                             </option>
                           )
                         })}
@@ -494,13 +402,15 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Color</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    {isVi ? 'Màu sắc' : 'Color'}
+                  </label>
                   <select
                     value={form.color}
                     onChange={(e) => setForm({ ...form, color: e.target.value })}
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors cursor-pointer"
                   >
-                    <option value="">Select color</option>
+                    <option value="">{isVi ? 'Chọn màu' : 'Select color'}</option>
                     {COLORS.map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
@@ -508,8 +418,12 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Sizes available
-                    {!form.category_id && <span className="text-gray-400 font-normal ml-1">(select a category first)</span>}
+                    {isVi ? 'Kích thước có sẵn' : 'Sizes available'}
+                    {!form.category_id && (
+                      <span className="text-gray-400 font-normal ml-1">
+                        {isVi ? '(Vui lòng chọn danh mục trước)' : '(select a category first)'}
+                      </span>
+                    )}
                   </label>
                   {availableSizes.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
@@ -521,14 +435,10 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
                             type="button"
                             onClick={() => setForm(prev => ({
                               ...prev,
-                              sizes: selected
-                                ? prev.sizes.filter(x => x !== s)
-                                : [...prev.sizes, s]
+                              sizes: selected ? prev.sizes.filter(x => x !== s) : [...prev.sizes, s]
                             }))}
                             className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                              selected
-                                ? 'bg-[#FF5722] text-white border-[#FF5722]'
-                                : 'bg-white text-gray-700 border-gray-300 hover:border-[#FF5722]'
+                              selected ? 'bg-[#FF5722] text-white border-[#FF5722]' : 'bg-white text-gray-700 border-gray-300 hover:border-[#FF5722]'
                             }`}
                           >
                             {s}
@@ -543,19 +453,22 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Brand</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  {isVi ? 'Thương hiệu' : 'Brand'}
+                </label>
                 <div className="relative">
                   <input
                     type="text"
                     value={brandInput}
                     onChange={(e) => handleBrandInput(e.target.value)}
                     onFocus={() => brandInput.length > 0 && setShowBrandSuggestions(true)}
-                    placeholder="Search or type brand name"
+                    placeholder={isVi ? 'Tìm kiếm hoặc nhập tên thương hiệu' : 'Search or type brand name'}
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors"
                   />
                   {selectedBrand && !brandIsFromSuggestions && (
                     <div className="mt-2 text-xs text-amber-600 flex items-center">
-                      <span className="mr-1">ⓘ</span> Brand not in our list (will be saved as new)
+                      <span className="mr-1">ⓘ</span>
+                      {isVi ? 'Thương hiệu chưa có trong danh sách (sẽ được lưu mới)' : 'Brand not in our list (will be saved as new)'}
                     </div>
                   )}
                   {showBrandSuggestions && brandInput.length > 0 && (
@@ -578,29 +491,34 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Condition</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  {isVi ? 'Tình trạng' : 'Condition'}
+                </label>
                 <select
                   value={form.condition}
                   onChange={(e) => setForm({ ...form, condition: e.target.value as ListingCondition })}
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors cursor-pointer"
                 >
-                  <option value="new">New</option>
-                  <option value="like_new">Like New</option>
-                  <option value="good">Good</option>
-                  <option value="fair">Fair</option>
-                  <option value="worn">Worn</option>
+                  <option value="new">{isVi ? 'Mới có tag' : 'New'}</option>
+                  <option value="like_new">{isVi ? 'Như mới' : 'Like New'}</option>
+                  <option value="good">{isVi ? 'Tốt' : 'Good'}</option>
+                  <option value="fair">{isVi ? 'Bình thường' : 'Fair'}</option>
+                  <option value="worn">{isVi ? 'Đã qua sử dụng' : 'Worn'}</option>
                 </select>
               </div>
             </div>
           </div>
 
-          {/* Visuals Section */}
+          {/* Visuals */}
           <div className="border border-gray-200 rounded-lg p-6 bg-gray-50/50 hover:bg-gray-50 transition-colors">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">Visuals</h2>
-            
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">
+              {isVi ? 'Hình ảnh' : 'Visuals'}
+            </h2>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">Images</label>
-              <div 
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                {isVi ? 'Hình ảnh' : 'Images'}
+              </label>
+              <div
                 className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-white hover:bg-gray-50 hover:border-orange-400 transition-all cursor-pointer"
                 onClick={() => fileInputRef.current?.click()}
                 onDragOver={handleDragOver}
@@ -621,23 +539,25 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                   <p className="text-sm font-medium text-gray-700 mb-1">
-                    {uploading ? 'Uploading images...' : 'Drag & drop images here or click to select'}
+                    {uploading
+                      ? (isVi ? 'Đang tải ảnh lên...' : 'Uploading images...')
+                      : (isVi ? 'Kéo & thả hình ảnh vào đây hoặc nhấn để chọn' : 'Drag & drop images here or click to select')}
                   </p>
-                  <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB each</p>
+                  <p className="text-xs text-gray-500">
+                    {isVi ? 'PNG, JPG, GIF tối đa 10MB mỗi tệp' : 'PNG, JPG, GIF up to 10MB each'}
+                  </p>
                 </div>
               </div>
 
               {previewUrls.length > 0 && (
                 <div className="mt-6">
-                  <p className="text-sm font-medium text-gray-700 mb-3">{previewUrls.length} image(s) selected</p>
+                  <p className="text-sm font-medium text-gray-700 mb-3">
+                    {isVi ? `${previewUrls.length} ảnh đã chọn` : `${previewUrls.length} image(s) selected`}
+                  </p>
                   <div className="grid grid-cols-4 gap-3">
                     {previewUrls.map((url, i) => (
                       <div key={i} className="relative group">
-                        <img 
-                          src={url} 
-                          alt={`Preview ${i}`} 
-                          className="w-full h-32 object-cover rounded-lg border border-gray-200 group-hover:border-orange-400 transition-colors" 
-                        />
+                        <img src={url} alt={`Preview ${i}`} className="w-full h-32 object-cover rounded-lg border border-gray-200 group-hover:border-orange-400 transition-colors" />
                         <button
                           type="button"
                           onClick={() => removeImage(i)}
@@ -660,7 +580,7 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
               type="button"
               className="flex-1 px-6 py-3 text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 hover:text-gray-900 transition-colors"
             >
-              Cancel
+              {isVi ? 'Hủy' : 'Cancel'}
             </button>
           </DialogClose>
           <button
@@ -669,7 +589,9 @@ export default function ListingForm({ locale, initialData, isOpen = true, onOpen
             onClick={handleSubmit}
             className="flex-1 px-6 py-3 bg-[#FF5722] text-white font-semibold rounded-lg hover:bg-[#E64A19] disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md hover:shadow-lg transition-all"
           >
-            {saving ? 'Saving...' : 'Save Listing'}
+            {saving
+              ? (isVi ? 'Đang lưu...' : 'Saving...')
+              : (isVi ? 'Lưu tin đăng' : 'Save Listing')}
           </button>
         </DialogFooter>
       </DialogContent>
