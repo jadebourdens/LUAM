@@ -41,5 +41,5 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           </main>
           <Analytics />  {/* ADD THIS */}
         </NextIntlClientProvider>
-        
+      
 }
