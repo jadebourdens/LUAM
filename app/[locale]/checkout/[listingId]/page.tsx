@@ -43,8 +43,9 @@ export default function CheckoutPage() {
   }
 
   const handleBuyNow = async () => {
-    setLoading(true)
-    setError(null)
+  if (loading) return
+  setLoading(true)
+  setError(null)
 
     await fetch('/api/analytics/track', {
       method: 'POST',
