@@ -111,19 +111,19 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
         }
 
         .la-hero__sub {
-  max-width: 520px;
-  font-size: 15px;
-  font-weight: 400;
-  line-height: 1.7;
-  color: var(--muted);
-}
+          max-width: 520px;
+          font-size: 15px;
+          font-weight: 400;
+          line-height: 1.7;
+          color: var(--muted);
+        }
 
         .la-hero__rule {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-top: 16px;
-}
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          margin-top: 16px;
+        }
 
         .la-hero__rule-line {
           width: 48px; height: 1.5px;
@@ -477,15 +477,15 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
             </p>
             <h1 className="la-hero__h1">
               {isVi ? (
-                <>Nơi đam mê<br /><em>thành</em> công việc thú vị.</>
+                <>Nơi các shop Việt<br />tìm được <em>khách của mình.</em></>
               ) : (
-                <>Where passion<br />becomes a <em>cool job.</em></>
+                <>Where Vietnamese businesses<br />find <em>their people.</em></>
               )}
             </h1>
             <p className="la-hero__sub">
               {isVi
-                ? "Nơi mua sắm thư giãn cho hàng local — nơi bạn bè, gia đình và những người đam mê biến điều họ yêu thích thành một công việc thú vị. Vì công việc không nhất thiết phải nhàm chán. Chúng tôi ở đây cho những người dám mơ."
-                : "The laid-back place to shop local — where friends, family, and passionate people turn what they love into a cool job. Because work doesn't have to be boring. We're here for the brave dreamers."}
+                ? "Luam là không gian miễn phí để các shop Việt Nam đăng sản phẩm và tiếp cận người mua yêu thích hàng nội địa. Dù bạn tự làm, tự nhập hay tự kinh doanh — chỗ này dành cho bạn."
+                : "Luam is a free space for Vietnamese-owned businesses to list their products and reach buyers who love shopping local. Whether you make it, source it, or sell it — you belong here."}
             </p>
             <div className="la-hero__rule">
               <div className="la-hero__rule-line" />
@@ -498,8 +498,8 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
           {[0,1].map(i => (
             <span key={i} className="la-strip__track">
               {(isVi
-                ? ["Thủ công Việt Nam", "Chính hãng", "Cộng đồng", "Tâm huyết", "Sáng tạo", "Di sản"]
-                : ["Vietnamese Craft", "Authentic", "Community", "Intentional", "Creative", "Legacy"]
+                ? ["Shop Việt Nam", "Hàng nội địa", "Cộng đồng", "Ủng hộ local", "Kinh doanh Việt", "Mua hàng Việt"]
+                : ["Vietnamese-owned", "Shop Local", "Community", "Support Local", "Small Business", "Made in Vietnam"]
               ).map((w, j) => (
                 <span key={j} className="la-strip__item">
                   {w}<span className="la-strip__sep">·</span>
@@ -515,21 +515,21 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
             <p className="la-section-label">{isVi ? "Sứ mệnh" : "Mission"}</p>
             <h2 className="la-story__h2">
               {isVi ? (
-                <>Kết nối nghệ nhân với<br /><em>những người trân trọng</em></>
+                <>Giúp shop Việt<br /><em>tiếp cận đúng người mua</em></>
               ) : (
-                <>Connecting makers with<br /><em>those who care</em></>
+                <>Helping Vietnamese businesses<br /><em>reach the right buyers</em></>
               )}
             </h2>
             <div className="la-story__body">
               {isVi ? (
                 <>
-                  <p>Tại Luam, chúng tôi kết nối các nghệ sĩ và doanh nghiệp khởi nghiệp với những người mua trân trọng sự sáng tạo và tính nguyên bản.</p>
-                  <p>Chúng tôi muốn tạo ra một không gian nơi mỗi giao dịch đều là sự ủng hộ thiết thực cho các thương hiệu địa phương Việt Nam.</p>
+                  <p>Luam là nơi để các shop Việt Nam — dù bạn tự sản xuất, nhập hàng chọn lọc hay kinh doanh sản phẩm địa phương — đăng bán và tiếp cận cộng đồng người mua yêu thích hàng Việt.</p>
+                  <p>Hoàn toàn miễn phí. Không phức tạp. Chỉ cần bạn là shop Việt Nam, có sản phẩm muốn bán — Luam là nơi dành cho bạn.</p>
                 </>
               ) : (
                 <>
-                  <p>At Luam, we connect artists and startups with buyers who value creativity and authenticity. Every product on our platform represents a maker who has poured intention into their craft.</p>
-                  <p>We want to build a bridge where every purchase serves as a meaningful step toward supporting and uplifting local Vietnamese brands.</p>
+                  <p>Luam is for Vietnamese-owned businesses of all kinds — whether you handmake your products, carefully source them, or curate local goods. If you're Vietnamese-owned and proud of what you sell, this is your space.</p>
+                  <p>Completely free. No catch. We connect you with buyers who actively choose to shop local and support Vietnamese businesses.</p>
                 </>
               )}
             </div>
@@ -538,18 +538,9 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
           <div className="la-story__right">
             <blockquote className="la-pull">
               {isVi
-                ? "\"Luam không chỉ là nơi mua sắm — đó là một cộng đồng ủng hộ thủ công, đồ handmadeinvietnam\""
-                : "\"Luam is more than a marketplace — it is a community celebrating Vietnamese craftsmanship.\""}
+                ? "\"Luam không chỉ là nơi bán hàng — đó là cộng đồng của những shop Việt và người mua tin vào giá trị hàng nội địa.\""
+                : "\"Luam is more than a marketplace — it is a community where Vietnamese businesses and local-first buyers find each other.\""}
             </blockquote>
-            <div className="la-story__body">
-              {isVi ? (
-                <>
-                </>
-              ) : (
-                <>
-                </>
-              )}
-            </div>
           </div>
         </section>
 
@@ -571,13 +562,13 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
               {[
                 {
                   n: "01",
-                  en: { title: "Authenticity", body: "We only work with makers who bring genuine craft and personal vision. No mass production. Every piece reflects a real person and brand behind it." },
-                  vi: { title: "Chân thực", body: "Chúng tôi chỉ hợp tác với những người thực sự đam mê thủ công. Không sản xuất đại trà." }
+                  en: { title: "Vietnamese-owned", body: "Every seller on Luam is a Vietnamese-owned business. Big or small, maker or reseller — what matters is that it's yours, and it's local." },
+                  vi: { title: "Shop Việt Nam", body: "Mọi shop trên Luam đều là doanh nghiệp Việt Nam. Lớn hay nhỏ, tự làm hay nhập hàng — điều quan trọng là của bạn, và là hàng Việt." }
                 },
                 {
                   n: "02",
-                  en: { title: "Community", body: "Luam is built on relationships — between makers and buyers." },
-                  vi: { title: "Cộng đồng", body: "Luam được xây dựng trên các mối quan hệ — giữa nghệ nhân và người mua." }
+                  en: { title: "Community", body: "Luam is built on real relationships — between sellers and buyers who choose local, on purpose." },
+                  vi: { title: "Cộng đồng", body: "Luam được xây dựng trên mối quan hệ thực sự — giữa các shop và người mua chọn hàng Việt một cách có chủ đích." }
                 },
               ].map(v => (
                 <div key={v.n} className="la-val">
@@ -599,12 +590,12 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
           </div>
           <div>
             <p className="la-closing__text">
-  {isVi
-    ? <>Những thứ tốt, làm bởi <em>người thật.</em><br />Tìm thấy ngay <em>tại đây.</em></>
-    : <>Good things, made by <em>real people.</em><br />Found right <em>here.</em></>}
-</p>
-<a className="la-cta" href={`/${locale}`}>
-  {isVi ? "Khám phá cửa hàng" : "Explore the marketplace"}
+              {isVi
+                ? <>Hàng Việt tốt, từ <em>shop thật.</em><br />Tìm thấy ngay <em>tại đây.</em></>
+                : <>Good things, from <em>real Vietnamese shops.</em><br />Found right <em>here.</em></>}
+            </p>
+            <a className="la-cta" href={`/${locale}`}>
+              {isVi ? "Khám phá cửa hàng" : "Explore the marketplace"}
             </a>
           </div>
         </section>
