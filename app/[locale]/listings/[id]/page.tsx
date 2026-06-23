@@ -246,7 +246,12 @@ export default function ListingDetailPage() {
         </div>
       ) : user ? (
         <>
-          {!isSold && <button onClick={handleMessageSeller} className="w-full bg-[#FF5722] text-white py-3 rounded-lg font-bold text-sm">Buy Now / Message</button>}
+          {!isSold && (
+            <div className="flex gap-2">
+              <Link href={`/${locale}/checkout/${listing.id}`} className="flex-1 bg-[#FF5722] text-white py-3 rounded-lg font-bold text-sm text-center">Buy Now</Link>
+              <button onClick={handleMessageSeller} className="flex-1 border border-[#FF5722] text-[#FF5722] py-3 rounded-lg font-bold text-sm">Message</button>
+            </div>
+          )}
           <button onClick={handleToggleFavorite} disabled={favoriteLoading} className="w-full py-2.5 rounded-lg border text-sm">{isFavorited ? '★ Saved' : '☆ Save'}</button>
         </>
       ) : (
