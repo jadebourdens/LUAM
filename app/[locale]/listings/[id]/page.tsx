@@ -68,8 +68,6 @@ function getCoverImage(images?: { image_url: string; position: number }[]) {
 
 // ---------- Metadata Generation ----------
 
-// ---------- Metadata Generation ----------
-
 export async function generateMetadata(
   { params }: { params: Promise<{ id: string; locale: string }> }
 ): Promise<Metadata> {
@@ -99,8 +97,7 @@ export async function generateMetadata(
       title: listing.title,
       description: listing.description || `${listing.title} — ${price} on Luam marketplace`,
       url: `https://luam.shop/${locale}/listings/${id}`,
-      // FIX: Change 'product' to 'website' or remove this line entirely
-      type: 'website', 
+      type: 'website',
       images: coverImage ? [{ url: coverImage, width: 1200, height: 630 }] : [],
     },
     twitter: {
@@ -159,6 +156,7 @@ export default async function ListingDetailPage({
   params: Promise<{ id: string; locale: string }>
 }) {
   const { id, locale } = await params
+  const isVi = locale === 'vi'
   const supabase = await createClient()
 
   // Fetch listing data
@@ -176,7 +174,7 @@ export default async function ListingDetailPage({
         <h1 className="text-2xl font-bold mb-2">Listing not found</h1>
         <p className="text-gray-600 mb-4">This listing may have been deleted or is no longer available.</p>
         <Link href={`/${locale}`} className="text-[#FF5722] hover:underline">
-          ← Back to Listings
+          &larr; Back to Listings
         </Link>
       </div>
     )
@@ -202,11 +200,11 @@ export default async function ListingDetailPage({
 
   const isSold = listing.status === 'sold'
   const specRows = [
-    { label: 'Category', value: listing.category?.name },
-    { label: 'Brand', value: listing.brand },
-    { label: 'Color', value: listing.color },
-    { label: 'Size', value: listing.size },
-    { label: 'Condition', value: listing.condition ? CONDITION_LABELS[listing.condition] : undefined },
+    { label: isVi ? 'Danh muc' : 'Category', value: listing.category?.name },
+    { label: isVi ? 'Thuong hieu' : 'Brand', value: listing.brand },
+    { label: isVi ? 'Mau sac' : 'Color', value: listing.color },
+    { label: isVi ? 'Kich thuoc' : 'Size', value: listing.size },
+    { label: isVi ? 'Tinh trang' : 'Condition', value: listing.condition ? CONDITION_LABELS[listing.condition] : undefined },
   ].filter((row) => row.value)
 
   const productSchema = generateProductSchema(listing)
@@ -222,7 +220,7 @@ export default async function ListingDetailPage({
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-6xl mx-auto px-4 py-6">
           <Link href={`/${locale}`} className="text-sm text-gray-500 mb-4 block hover:underline">
-            ← Back
+            &larr; Back
           </Link>
 
           <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-6 items-start">
@@ -286,7 +284,7 @@ export default async function ListingDetailPage({
                       href={`/${locale}/sellers/${listing.seller?.username}`}
                       className="font-semibold text-sm hover:underline"
                     >
-                      {((listing.seller?.brand_name || listing.seller?.full_name) ?? 'Anonymous')}
+                      {(listing.seller?.brand_name || listing.seller?.full_name) ?? 'Anonymous'}
                     </Link>
                   </div>
                   <RelatedGrid listings={moreBoutique} locale={locale} />
@@ -341,4 +339,3 @@ export default async function ListingDetailPage({
     </>
   )
 }
-
